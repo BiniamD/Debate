@@ -22,16 +22,16 @@ function DebateCard({ debate }: { debate: Debate }) {
   return (
     <Link href={`/debate/${debate.id}`}>
       <div 
-        className="glass rounded-md p-4 hover:scale-[1.01] transition-transform cursor-pointer group"
+        className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-4 border border-amber-200/50 dark:border-amber-700/30 hover:scale-[1.01] hover:shadow-lg transition-all cursor-pointer group"
         data-testid={`card-debate-${debate.id}`}
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-white" data-testid={`text-symbol-${debate.id}`}>
+            <span className="text-xl font-bold text-amber-900 dark:text-amber-100" data-testid={`text-symbol-${debate.id}`}>
               ${debate.symbol}
             </span>
           </div>
-          <div className="flex items-center gap-1.5 text-slate-400 text-sm">
+          <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-sm">
             <Calendar className="w-3.5 h-3.5" />
             <span data-testid={`text-date-${debate.id}`}>
               {format(createdAt, "MMM d, yyyy")}
@@ -40,22 +40,22 @@ function DebateCard({ debate }: { debate: Debate }) {
         </div>
         
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-green-500/10 rounded-md p-2 text-center">
-            <TrendingUp className="w-4 h-4 text-green-400 mx-auto mb-1" />
-            <span className="text-xs text-green-400">Bull</span>
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-md p-2 text-center">
+            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mx-auto mb-1" />
+            <span className="text-xs text-emerald-600 dark:text-emerald-400">Bull</span>
           </div>
-          <div className="bg-red-500/10 rounded-md p-2 text-center">
-            <TrendingDown className="w-4 h-4 text-red-400 mx-auto mb-1" />
-            <span className="text-xs text-red-400">Bear</span>
+          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-md p-2 text-center">
+            <TrendingDown className="w-4 h-4 text-amber-700 dark:text-amber-400 mx-auto mb-1" />
+            <span className="text-xs text-amber-700 dark:text-amber-400">Bear</span>
           </div>
-          <div className="bg-blue-500/10 rounded-md p-2 text-center">
-            <Minus className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-            <span className="text-xs text-blue-400">Neutral</span>
+          <div className="bg-yellow-50 dark:bg-yellow-950/30 rounded-md p-2 text-center">
+            <Minus className="w-4 h-4 text-yellow-700 dark:text-yellow-400 mx-auto mb-1" />
+            <span className="text-xs text-yellow-700 dark:text-yellow-400">Neutral</span>
           </div>
         </div>
         
         <div className="mt-3 text-right">
-          <span className="text-xs text-slate-500 group-hover:text-primary transition-colors">
+          <span className="text-xs text-amber-500 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
             View debate →
           </span>
         </div>
@@ -88,39 +88,39 @@ export default function History() {
   const isLoading = authLoading || debatesLoading;
 
   return (
-    <div className="gradient-bg min-h-screen py-8 px-4">
+    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-950 dark:via-stone-950 dark:to-amber-950">
       <div className="max-w-4xl mx-auto">
         <nav className="flex items-center justify-between mb-8">
           <Link href="/">
-            <Button variant="ghost" size="sm" className="text-slate-300" data-testid="button-back">
+            <Button variant="ghost" size="sm" className="text-amber-800 dark:text-amber-200" data-testid="button-back">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-primary" />
-            <span className="text-white font-semibold">Echo Chamber</span>
+            <MessageSquare className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <span className="text-amber-900 dark:text-amber-100 font-semibold">Echo Chamber</span>
           </div>
         </nav>
 
         <header className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-white mb-2" data-testid="text-history-title">
+          <h1 className="text-3xl font-bold text-amber-900 dark:text-amber-100 mb-2" data-testid="text-history-title">
             Your Debate History
           </h1>
-          <p className="text-slate-400">
+          <p className="text-amber-600 dark:text-amber-400">
             Your last 30 AI-generated stock analyses
           </p>
         </header>
 
         {!isAuthenticated && !authLoading ? (
-          <div className="glass rounded-md p-8 text-center">
-            <LogIn className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">Sign in to view history</h2>
-            <p className="text-slate-400 mb-6">
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-8 text-center border border-amber-200/50 dark:border-amber-700/30">
+            <LogIn className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-amber-900 dark:text-amber-100 mb-2">Sign in to view history</h2>
+            <p className="text-amber-600 dark:text-amber-400 mb-6">
               Log in to access your debate history and save your analyses.
             </p>
             <Button 
-              variant="default"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login-history"
             >
@@ -130,7 +130,7 @@ export default function History() {
           </div>
         ) : isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <Loader2 className="w-8 h-8 animate-spin text-emerald-600 dark:text-emerald-400" />
           </div>
         ) : debates && debates.length > 0 ? (
           <div className="grid gap-4 md:grid-cols-2" data-testid="grid-debates">
@@ -139,14 +139,14 @@ export default function History() {
             ))}
           </div>
         ) : (
-          <div className="glass rounded-md p-8 text-center">
-            <MessageSquare className="w-12 h-12 text-slate-500 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-white mb-2">No debates yet</h2>
-            <p className="text-slate-400 mb-6">
+          <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-8 text-center border border-amber-200/50 dark:border-amber-700/30">
+            <MessageSquare className="w-12 h-12 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-amber-900 dark:text-amber-100 mb-2">No debates yet</h2>
+            <p className="text-amber-600 dark:text-amber-400 mb-6">
               Generate your first debate to see it here.
             </p>
             <Link href="/">
-              <Button variant="default" data-testid="button-generate-first">
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" data-testid="button-generate-first">
                 Generate a Debate
               </Button>
             </Link>
