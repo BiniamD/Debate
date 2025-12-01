@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useDebateLimit } from "@/hooks/use-debate-limit";
+import { PaywallModal, DebateCounter } from "@/components/paywall-modal";
 import type { DebateResponse, Perspective } from "@shared/schema";
 import {
   MessageSquare,
@@ -102,7 +104,9 @@ export default function Home() {
   const [context, setContext] = useState("");
   const [debate, setDebate] = useState<DebateWithId | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
+  const { remaining, canGenerate, isPro, recordDebate } = useDebateLimit();
 
   const debateMutation = useMutation({
     mutationFn: async (data: { symbol: string; context?: string }) => {
@@ -118,6 +122,7 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setDebate(data);
+      recordDebate(); // Track usage after successful generation
     },
     onError: (error: Error) => {
       toast({
@@ -127,6 +132,11 @@ export default function Home() {
       });
     },
   });
+
+  const handleUpgrade = () => {
+    // Will be replaced with Stripe checkout
+    window.location.href = "/api/checkout";
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +148,13 @@ export default function Home() {
       });
       return;
     }
+    
+    // Check rate limit
+    if (!canGenerate) {
+      setShowPaywall(true);
+      return;
+    }
+    
     setDebate(null);
     debateMutation.mutate({
       symbol: symbol.toUpperCase().trim(),
@@ -192,9 +209,12 @@ export default function Home() {
           <p className="text-xl md:text-2xl text-slate-300 mb-2" data-testid="text-tagline">
             Break the echo. See every angle.
           </p>
-          <p className="text-slate-400" data-testid="text-subtitle">
+          <p className="text-slate-400 mb-4" data-testid="text-subtitle">
             AI-powered bull, bear, and neutral perspectives on any stock
           </p>
+          <div className="flex justify-center">
+            <DebateCounter remaining={remaining} isPro={isPro} onUpgrade={handleUpgrade} />
+          </div>
         </header>
 
         {/* Input Section */}
@@ -330,6 +350,13 @@ export default function Home() {
           </p>
         </footer>
       </div>
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        open={showPaywall}
+        onClose={() => setShowPaywall(false)}
+        onUpgrade={handleUpgrade}
+      />
     </div>
   );
 }
