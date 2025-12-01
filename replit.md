@@ -10,11 +10,11 @@ The application follows a modern fintech aesthetic with a premium dark theme, gl
 
 ## Key Features
 
-- **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock
-- **Shareable Debates**: Public URLs for sharing debates on Twitter/social media
-- **User Accounts**: Replit Auth for easy login (Google, GitHub, email)
-- **Debate History**: Sidebar showing past debates sorted by date
-- **Monetization**: Free tier (limited debates) vs Premium (unlimited)
+- **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock powered by Claude Sonnet 4
+- **Shareable Debates**: Public URLs for sharing debates on Twitter/social media (/debate/:id routes)
+- **Rate Limiting**: Free tier with 3 debates/month tracked via localStorage with monthly reset
+- **Monetization**: Free tier vs Pro ($9/month via Stripe) with paywall modal when limit reached
+- **Share Functionality**: Twitter share with pre-filled tweets and copy link to clipboard
 
 ## User Preferences
 
@@ -87,10 +87,10 @@ Preferred communication style: Simple, everyday language.
 - Database credentials managed via environment variables
 
 **Current State**
-- Storage infrastructure prepared but minimal implementation
-- MemStorage class exists as placeholder for future features
-- No persistent debate history in MVP
-- Neon Database serverless PostgreSQL ready for integration
+- PostgreSQL database with debates and users tables
+- Debates saved with unique nanoid IDs for sharing
+- DatabaseStorage class with full CRUD operations
+- Stripe integration for Pro subscriptions
 
 ### Type Safety & Validation
 
