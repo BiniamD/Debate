@@ -1,0 +1,168 @@
+Build "Debate" - AI Trading Coach MVP
+
+PROJECT OVERVIEW:
+Create a full-stack web app that provides multi-perspective AI debates about stock investments.
+Apply first principles thinking: instead of 30 features, build 1 killer feature 10x better.
+
+TECH STACK:
+- Frontend: Vite + React 19 + TypeScript + Tailwind CSS
+- Backend: Express + TypeScript + Anthropic Claude Sonnet 4.5
+- Icons: lucide-react
+- Styling: Tailwind with dark gradient theme
+
+PROJECT STRUCTURE:
+
+debate/
+├── client/
+│   ├── src/
+│   │   ├── App.tsx          (main UI component)
+│   │   ├── App.css          (animations)
+│   │   ├── index.css        (Tailwind config)
+│   │   └── main.tsx         (entry point)
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   └── .env.example
+├── server/
+│   ├── src/
+│   │   └── index.ts         (Express API)
+│   ├── package.json
+│   ├── tsconfig.json
+│   └── .env.example
+├── package.json             (root with concurrent scripts)
+└── README.md 
+BACKEND API (server/src/index.ts):
+Create Express server with:
+- POST /api/debate endpoint
+- Accepts: { symbol: string, context?: string }
+- Uses Anthropic Claude API with this system prompt:
+
+"You are a financial analysis AI that provides balanced, multi-perspective analysis.
+For any stock symbol, provide THREE perspectives:
+1. BULL CASE: optimistic view, growth catalysts, competitive advantages
+2. BEAR CASE: risks, downsides, competitive threats  
+3. NEUTRAL CASE: data-driven, objective metrics, balanced assessment
+
+Format as JSON:
+{
+  "bull": {
+    "title": "Bull Case",
+    "argument": "2-3 paragraph optimistic analysis...",
+    "keyPoints": ["Point 1", "Point 2", "Point 3"]
+  },
+  "bear": {
+    "title": "Bear Case",
+    "argument": "2-3 paragraph pessimistic analysis...",
+    "keyPoints": ["Point 1", "Point 2", "Point 3"]
+  },
+  "neutral": {
+    "title": "Neutral Analysis",
+    "argument": "2-3 paragraph balanced analysis...",
+    "keyPoints": ["Point 1", "Point 2", "Point 3"]
+  }
+}"
+
+- Model: claude-sonnet-4-20250514
+- Max tokens: 2048
+- Parse JSON from Claude response
+- Enable CORS
+- Add health check: GET /api/health
+- Port: 3001
+- Environment: ANTHROPIC_API_KEY
+
+FRONTEND UI (client/src/App.tsx):
+Create React component with:
+
+HEADER:
+- Title: "Debate" with MessageSquare icon
+- Tagline: "AI that argues with itself about your investments"
+- Subtitle: "Get bull, bear, and neutral perspectives on any stock"
+
+INPUT SECTION (glass-morphism card):
+- Stock symbol input (uppercase, required, placeholder: "AAPL, TSLA, NVDA...")
+- Optional context textarea (3 rows, placeholder: "E.g., 'Considering buying for long-term hold'...")
+- Generate button with Sparkles icon
+- Loading state with Loader2 spinning icon
+- Error display in red
+
+RESULTS SECTION (3-column grid):
+Three perspective cards with animations:
+
+1. BULL CARD (green theme):
+   - TrendingUp icon
+   - Green border and background (border-green-500/50 bg-green-500/5)
+   - Title, argument text, 3 key points
+   
+2. BEAR CARD (red theme):
+   - TrendingDown icon
+   - Red border and background (border-red-500/50 bg-red-500/5)
+   - Title, argument text, 3 key points
+
+3. NEUTRAL CARD (blue theme):
+   - Minus icon
+   - Blue border and background (border-blue-500/50 bg-blue-500/5)
+   - Title, argument text, 3 key points
+
+SHARE FUNCTIONALITY:
+- Share button with Share2 icon
+- Use navigator.share() if available
+- Fallback: copy to clipboard
+- Share text format: "Debate on [SYMBOL]: Bull: [point 1], Bear: [point 1], Neutral: [point 1]"
+
+FOOTER:
+- "Free: 3 debates/month • Pro ($9/mo): Unlimited debates"
+- "Not financial advice. AI-generated perspectives for educational purposes only."
+
+STYLING (Tailwind):
+- Background: bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900
+- Glass cards: bg-white/10 backdrop-blur-lg border-white/20
+- Text: white for headers, slate-300 for body, slate-400 for muted
+- Buttons: bg-blue-600 hover:bg-blue-700
+- Animations: fadeIn on results (opacity 0→1, translateY 20px→0, 0.5s)
+- Cards: hover:scale-105 transition
+- Responsive: 1 column mobile, 3 columns desktop (md:grid-cols-3)
+
+PACKAGE.JSON SCRIPTS:
+Root:
+- "dev": "concurrently \"npm run dev:client\" \"npm run dev:server\""
+- "dev:client": "cd client && vite"
+- "dev:server": "cd server && tsx watch src/index.ts"
+
+Client dependencies:
+- react, react-dom, lucide-react
+- Dev: vite, @vitejs/plugin-react, typescript, tailwindcss, postcss, autoprefixer
+
+Server dependencies:
+- express, cors, dotenv, @anthropic-ai/sdk
+- Dev: tsx, typescript, @types/express, @types/cors, @types/node
+
+TAILWIND CONFIG (client/tailwind.config.js):
+- content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"]
+- Default theme with plugins: []
+
+CSS ANIMATIONS (client/src/App.css):
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+
+ENVIRONMENT FILES:
+server/.env.example: ANTHROPIC_API_KEY=your_key_here, PORT=3001
+client/.env.example: VITE_API_URL=http://localhost:3001
+
+README.md:
+Include:
+- Title and tagline
+- Core insight: "Retail investors need better decisions, not more information"
+- Features: Multi-perspective AI debates
+- Quick start instructions
+- First principles approach explanation
+- Business model: $9/month, profitable from day one
+- Tech stack
+- Not financial advice disclaimer
+
+Make it production-ready, beautiful, and simple. Use TypeScript strict mode.
+Run with: npm run dev
