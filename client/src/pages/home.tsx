@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -21,8 +21,10 @@ import {
   LogIn,
   LogOut,
   User,
+  History,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
+import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DebateWithId extends DebateResponse {
@@ -111,20 +113,39 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, isFetching: authFetching } = useAuth();
+  
+  const FREE_TIER_LIMIT = 3;
   
   // Use server-side rate limiting for logged-in users, localStorage for anonymous
   const serverIsPro = isAuthenticated && user?.isPremium;
-  const { remaining, canGenerate, isPro, recordDebate } = useDebateLimit();
+  const { remaining: localRemaining, canGenerate: localCanGenerate, isPro: localIsPro, recordDebate } = useDebateLimit();
   
-  // Logged-in Pro users bypass local rate limiting
-  const effectiveCanGenerate = serverIsPro || canGenerate;
-  const effectiveIsPro = serverIsPro || isPro;
+  // For logged-in users: use server's debatesThisMonth directly
+  // No optimistic tracking needed - just check server state + disable while loading
+  const serverDebatesThisMonth = user?.debatesThisMonth ?? 0;
+  const serverRemaining = FREE_TIER_LIMIT - serverDebatesThisMonth;
+  
+  // Determine if user can generate based on their status
+  // Block while auth is loading OR refetching to prevent race conditions
+  // authLoading = true during initial load
+  // authFetching = true during initial load AND during refetch after mutation
+  const effectiveRemaining = isAuthenticated ? Math.max(0, serverRemaining) : localRemaining;
+  const authBusy = authLoading || (isAuthenticated && authFetching);
+  const effectiveCanGenerate = authBusy
+    ? false // Block while loading/refetching to prevent race conditions
+    : (serverIsPro || (isAuthenticated ? serverRemaining > 0 : localCanGenerate));
+  const effectiveIsPro = serverIsPro || localIsPro;
 
   const debateMutation = useMutation({
     mutationFn: async (data: { symbol: string; context?: string }) => {
       const response = await apiRequest("POST", "/api/debate", data);
       const json = await response.json();
+      
+      // Check for rate limit error
+      if (response.status === 429) {
+        throw new Error("RATE_LIMIT_EXCEEDED");
+      }
       
       // Validate the response has the expected structure
       if (!json.bull?.title || !json.bear?.title || !json.neutral?.title || !json.id) {
@@ -135,12 +156,21 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setDebate(data);
-      // Only track local usage for anonymous users (Pro users tracked server-side)
-      if (!serverIsPro) {
+      // Track usage based on auth status
+      if (!isAuthenticated) {
+        // Anonymous users: track in localStorage
         recordDebate();
+      } else if (!serverIsPro) {
+        // Refresh user data to sync with server
+        queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       }
     },
     onError: (error: Error) => {
+      // Show paywall for rate limit errors (check both custom code and HTTP status)
+      if (error.message === "RATE_LIMIT_EXCEEDED" || error.message.includes("429")) {
+        setShowPaywall(true);
+        return;
+      }
       toast({
         title: "Error generating debate",
         description: error.message || "Failed to generate debate. Please try again.",
@@ -237,6 +267,12 @@ export default function Home() {
             <div className="h-10" />
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-3">
+              <Link href="/history">
+                <Button variant="ghost" size="sm" className="text-slate-300" data-testid="button-history">
+                  <History className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">History</span>
+                </Button>
+              </Link>
               <Avatar className="h-8 w-8">
                 <AvatarImage src={user.profileImageUrl || undefined} />
                 <AvatarFallback>
@@ -291,7 +327,7 @@ export default function Home() {
             AI-powered bull, bear, and neutral perspectives on any stock
           </p>
           <div className="flex justify-center">
-            <DebateCounter remaining={remaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
+            <DebateCounter remaining={effectiveRemaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
           </div>
         </header>
 
@@ -338,7 +374,7 @@ export default function Home() {
 
             <Button
               type="submit"
-              disabled={debateMutation.isPending || !symbol.trim()}
+              disabled={debateMutation.isPending || !symbol.trim() || !effectiveCanGenerate}
               className="w-full"
               data-testid="button-generate"
             >

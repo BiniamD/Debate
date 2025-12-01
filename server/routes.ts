@@ -182,6 +182,8 @@ export async function registerRoutes(
     }
   });
 
+  const FREE_TIER_LIMIT = 3;
+
   // Debate generation endpoint (optional auth - works for both logged in and anonymous users)
   app.post("/api/debate", optionalAuth, async (req: any, res) => {
     try {
@@ -195,6 +197,7 @@ export async function registerRoutes(
       }
 
       const { symbol, context } = parseResult.data;
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
       // Get user ID if authenticated
       let userId: number | null = null;
@@ -203,8 +206,22 @@ export async function registerRoutes(
         if (user) {
           userId = user.id;
           
+          // Check rate limit for non-Pro users
+          if (!user.isPremium) {
+            const debatesThisMonth = user.lastDebateMonth === currentMonth 
+              ? user.debatesThisMonth 
+              : 0;
+            
+            if (debatesThisMonth >= FREE_TIER_LIMIT) {
+              return res.status(429).json({
+                error: "Rate limit exceeded",
+                message: "You've reached your free tier limit of 3 debates this month. Upgrade to Pro for unlimited debates.",
+                code: "RATE_LIMIT_EXCEEDED",
+              });
+            }
+          }
+          
           // Update user's monthly debate count
-          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
           if (user.lastDebateMonth !== currentMonth) {
             // New month, reset count
             await storage.updateUser(user.id, { 
