@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Anthropic from "@anthropic-ai/sdk";
 import { debateRequestSchema, debateResponseSchema, type DebateResponse } from "@shared/schema";
+import { storage } from "./storage";
 
 // Using the javascript_anthropic blueprint
 // The newest Anthropic model is "claude-sonnet-4-20250514"
@@ -46,6 +47,29 @@ export async function registerRoutes(
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Get debate by ID (for shared links)
+  app.get("/api/debate/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const debate = await storage.getDebate(id);
+      
+      if (!debate) {
+        return res.status(404).json({ error: "Debate not found" });
+      }
+      
+      res.json({
+        id: debate.id,
+        symbol: debate.symbol,
+        context: debate.context,
+        createdAt: debate.createdAt,
+        ...debate.result,
+      });
+    } catch (error) {
+      console.error("Error fetching debate:", error);
+      res.status(500).json({ error: "Failed to fetch debate" });
+    }
   });
 
   // Debate generation endpoint
@@ -107,7 +131,15 @@ export async function registerRoutes(
         });
       }
 
-      res.json(validationResult.data);
+      // Save debate to database (userId null for anonymous users)
+      const debate = await storage.createDebate(null, symbol, context, validationResult.data);
+
+      // Return result with debate ID for sharing
+      res.json({
+        id: debate.id,
+        symbol: debate.symbol,
+        ...validationResult.data,
+      });
     } catch (error) {
       console.error("Debate generation error:", error);
       

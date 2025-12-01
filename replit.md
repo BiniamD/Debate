@@ -1,10 +1,20 @@
-# Debate - AI Trading Coach
+# Echo Chamber - AI Trading Coach
 
 ## Overview
 
-Debate is a full-stack web application that provides multi-perspective AI analysis for stock investments. The application generates three distinct viewpoints (bull case, bear case, and neutral analysis) for any given stock symbol using Claude AI. The core philosophy is focused execution: one killer feature done exceptionally well rather than spreading across many features.
+Echo Chamber is a full-stack web application that provides multi-perspective AI analysis for stock investments. The application generates three distinct viewpoints (bull case, bear case, and neutral analysis) for any given stock symbol using Claude AI. The core philosophy is focused execution: one killer feature done exceptionally well rather than spreading across many features.
+
+The name "Echo Chamber" is ironic - while the term typically refers to a space where only one viewpoint is reinforced, this platform deliberately breaks the echo by presenting multiple opposing perspectives.
 
 The application follows a modern fintech aesthetic with a premium dark theme, glass morphism design elements, and clear visual separation between different perspectives through color coding.
+
+## Key Features
+
+- **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock
+- **Shareable Debates**: Public URLs for sharing debates on Twitter/social media
+- **User Accounts**: Replit Auth for easy login (Google, GitHub, email)
+- **Debate History**: Sidebar showing past debates sorted by date
+- **Monetization**: Free tier (limited debates) vs Premium (unlimited)
 
 ## User Preferences
 

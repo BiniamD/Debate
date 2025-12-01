@@ -13,9 +13,15 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Share2,
+  Link2,
   CheckCircle,
 } from "lucide-react";
+import { SiX } from "react-icons/si";
+
+interface DebateWithId extends DebateResponse {
+  id: string;
+  symbol: string;
+}
 
 function PerspectiveCard({
   perspective,
@@ -94,7 +100,7 @@ function PerspectiveCard({
 export default function Home() {
   const [symbol, setSymbol] = useState("");
   const [context, setContext] = useState("");
-  const [debate, setDebate] = useState<DebateResponse | null>(null);
+  const [debate, setDebate] = useState<DebateWithId | null>(null);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
@@ -104,11 +110,11 @@ export default function Home() {
       const json = await response.json();
       
       // Validate the response has the expected structure
-      if (!json.bull?.title || !json.bear?.title || !json.neutral?.title) {
+      if (!json.bull?.title || !json.bear?.title || !json.neutral?.title || !json.id) {
         throw new Error("Invalid response structure from AI");
       }
       
-      return json as DebateResponse;
+      return json as DebateWithId;
     },
     onSuccess: (data) => {
       setDebate(data);
@@ -139,40 +145,34 @@ export default function Home() {
     });
   };
 
-  const handleShare = async () => {
-    if (!debate) return;
-
-    const shareText = `Debate on ${symbol.toUpperCase()}:\n\nBull: ${debate.bull.keyPoints[0]}\n\nBear: ${debate.bear.keyPoints[0]}\n\nNeutral: ${debate.neutral.keyPoints[0]}`;
-
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Debate on ${symbol.toUpperCase()}`,
-          text: shareText,
-        });
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          await copyToClipboard(shareText);
-        }
-      }
-    } else {
-      await copyToClipboard(shareText);
-    }
+  const getShareUrl = () => {
+    if (!debate) return "";
+    return `${window.location.origin}/debate/${debate.id}`;
   };
 
-  const copyToClipboard = async (text: string) => {
+  const handleTwitterShare = () => {
+    if (!debate) return;
+    
+    const shareUrl = getShareUrl();
+    const text = `Check out this Echo Chamber analysis on $${debate.symbol}:\n\nBull: ${debate.bull.keyPoints[0]}\nBear: ${debate.bear.keyPoints[0]}\n\n`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
+    window.open(twitterUrl, "_blank", "width=550,height=420");
+  };
+
+  const handleCopyLink = async () => {
+    const shareUrl = getShareUrl();
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       toast({
-        title: "Copied to clipboard",
-        description: "Debate summary copied successfully!",
+        title: "Link copied!",
+        description: "Share this link with anyone to show them this debate.",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast({
         title: "Failed to copy",
-        description: "Could not copy to clipboard.",
+        description: "Could not copy link to clipboard.",
         variant: "destructive",
       });
     }
@@ -186,14 +186,14 @@ export default function Home() {
           <div className="flex items-center justify-center gap-3 mb-4">
             <MessageSquare className="w-10 h-10 text-primary" />
             <h1 className="text-4xl md:text-5xl font-bold text-white" data-testid="text-app-title">
-              Debate
+              Echo Chamber
             </h1>
           </div>
           <p className="text-xl md:text-2xl text-slate-300 mb-2" data-testid="text-tagline">
-            AI that argues with itself about your investments
+            Break the echo. See every angle.
           </p>
           <p className="text-slate-400" data-testid="text-subtitle">
-            Get bull, bear, and neutral perspectives on any stock
+            AI-powered bull, bear, and neutral perspectives on any stock
           </p>
         </header>
 
@@ -262,31 +262,42 @@ export default function Home() {
         {/* Results Section */}
         {debate && (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="text-2xl font-semibold text-white">
                 Analysis for{" "}
                 <span className="text-primary" data-testid="text-analyzed-symbol">
-                  {symbol.toUpperCase()}
+                  {debate.symbol}
                 </span>
               </h2>
-              <Button
-                variant="outline"
-                onClick={handleShare}
-                className="border-white/20 text-white"
-                data-testid="button-share"
-              >
-                {copied ? (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Share2 className="w-4 h-4 mr-2" />
-                    Share
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={handleTwitterShare}
+                  className="border-white/20 text-white"
+                  data-testid="button-share-twitter"
+                >
+                  <SiX className="w-4 h-4 mr-2" />
+                  Share on X
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="border-white/20 text-white"
+                  data-testid="button-copy-link"
+                >
+                  {copied ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="w-4 h-4 mr-2" />
+                      Copy Link
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
