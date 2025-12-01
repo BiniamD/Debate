@@ -102,6 +102,12 @@ export default function Home() {
     mutationFn: async (data: { symbol: string; context?: string }) => {
       const response = await apiRequest("POST", "/api/debate", data);
       const json = await response.json();
+      
+      // Validate the response has the expected structure
+      if (!json.bull?.title || !json.bear?.title || !json.neutral?.title) {
+        throw new Error("Invalid response structure from AI");
+      }
+      
       return json as DebateResponse;
     },
     onSuccess: (data) => {

@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import Anthropic from "@anthropic-ai/sdk";
-import { debateRequestSchema, type DebateResponse } from "@shared/schema";
+import { debateRequestSchema, debateResponseSchema, type DebateResponse } from "@shared/schema";
 
 // Using the javascript_anthropic blueprint
 // The newest Anthropic model is "claude-sonnet-4-20250514"
@@ -83,29 +83,31 @@ export async function registerRoutes(
       }
 
       // Parse JSON response
-      let debateResponse: DebateResponse;
+      let rawParsed: unknown;
       try {
         // Try to extract JSON from the response (in case there's extra text)
         const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
           throw new Error("No JSON found in response");
         }
-        debateResponse = JSON.parse(jsonMatch[0]) as DebateResponse;
+        rawParsed = JSON.parse(jsonMatch[0]);
       } catch (parseError) {
         console.error("Failed to parse Claude response:", textContent.text);
         throw new Error("Failed to parse AI response as JSON");
       }
 
-      // Validate the response structure
-      if (
-        !debateResponse.bull ||
-        !debateResponse.bear ||
-        !debateResponse.neutral
-      ) {
-        throw new Error("Invalid debate response structure");
+      // Validate the response structure using Zod schema
+      const validationResult = debateResponseSchema.safeParse(rawParsed);
+      if (!validationResult.success) {
+        console.error("Debate response validation failed:", validationResult.error.errors);
+        console.error("Raw parsed response:", JSON.stringify(rawParsed, null, 2));
+        return res.status(502).json({
+          error: "Invalid AI response structure",
+          message: "The AI generated an invalid response format. Please try again.",
+        });
       }
 
-      res.json(debateResponse);
+      res.json(validationResult.data);
     } catch (error) {
       console.error("Debate generation error:", error);
       
