@@ -1,18 +1,22 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+export const perspectiveSchema = z.object({
+  title: z.string(),
+  argument: z.string(),
+  keyPoints: z.array(z.string()),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
+export const debateResponseSchema = z.object({
+  bull: perspectiveSchema,
+  bear: perspectiveSchema,
+  neutral: perspectiveSchema,
 });
 
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const debateRequestSchema = z.object({
+  symbol: z.string().min(1).max(10),
+  context: z.string().optional(),
+});
+
+export type Perspective = z.infer<typeof perspectiveSchema>;
+export type DebateResponse = z.infer<typeof debateResponseSchema>;
+export type DebateRequest = z.infer<typeof debateRequestSchema>;

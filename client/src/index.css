@@ -196,6 +196,48 @@
  * need to be distinguished from eachother visually.
  */
 @layer utilities {
+  /* Custom fadeIn animation for perspective cards */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-fadeIn-delay-1 {
+    animation: fadeIn 0.5s ease-out 0.1s forwards;
+    opacity: 0;
+  }
+
+  .animate-fadeIn-delay-2 {
+    animation: fadeIn 0.5s ease-out 0.2s forwards;
+    opacity: 0;
+  }
+
+  /* Glass morphism effect */
+  .glass {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  /* Gradient background for dark theme */
+  .gradient-bg {
+    background: linear-gradient(135deg, 
+      hsl(222 47% 11%) 0%, 
+      hsl(217 33% 17%) 50%, 
+      hsl(222 47% 11%) 100%);
+    min-height: 100vh;
+  }
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */
   input[type="search"]::-webkit-search-cancel-button {
