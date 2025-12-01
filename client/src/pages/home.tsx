@@ -133,9 +133,26 @@ export default function Home() {
     },
   });
 
-  const handleUpgrade = () => {
-    // Will be replaced with Stripe checkout
-    window.location.href = "/api/checkout";
+  const handleUpgrade = async () => {
+    try {
+      const response = await fetch("/api/checkout", { method: "POST" });
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to start checkout. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error", 
+        description: "Failed to connect to payment service.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {

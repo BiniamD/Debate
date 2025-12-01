@@ -11,7 +11,7 @@ import { Crown, Sparkles, Zap, History, Check } from "lucide-react";
 interface PaywallModalProps {
   open: boolean;
   onClose: () => void;
-  onUpgrade: () => void;
+  onUpgrade: () => Promise<void>;
 }
 
 export function PaywallModal({ open, onClose, onUpgrade }: PaywallModalProps) {
@@ -81,7 +81,7 @@ export function PaywallModal({ open, onClose, onUpgrade }: PaywallModalProps) {
 interface DebateCounterProps {
   remaining: number;
   isPro: boolean;
-  onUpgrade: () => void;
+  onUpgrade: () => Promise<void>;
 }
 
 export function DebateCounter({ remaining, isPro, onUpgrade }: DebateCounterProps) {

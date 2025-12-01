@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import Anthropic from "@anthropic-ai/sdk";
 import { debateRequestSchema, debateResponseSchema, type DebateResponse } from "@shared/schema";
 import { storage } from "./storage";
+import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 
 // Using the javascript_anthropic blueprint
 // The newest Anthropic model is "claude-sonnet-4-20250514"
@@ -69,6 +70,77 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching debate:", error);
       res.status(500).json({ error: "Failed to fetch debate" });
+    }
+  });
+
+  // Stripe checkout endpoint - create checkout session for Pro plan
+  app.post("/api/checkout", async (req, res) => {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const host = req.get('host');
+      const protocol = req.protocol;
+      
+      // Create a checkout session for the Pro plan ($9/month)
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Echo Chamber Pro',
+              description: 'Unlimited debates per month',
+            },
+            unit_amount: 900, // $9.00
+            recurring: { interval: 'month' },
+          },
+          quantity: 1,
+        }],
+        mode: 'subscription',
+        success_url: `${protocol}://${host}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${protocol}://${host}/`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Checkout error:", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+  });
+
+  // Checkout success - verify subscription and mark user as Pro
+  app.get("/api/checkout/verify", async (req, res) => {
+    try {
+      const { session_id } = req.query;
+      if (!session_id || typeof session_id !== 'string') {
+        return res.status(400).json({ error: "Missing session_id" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+
+      if (session.payment_status === 'paid') {
+        res.json({ 
+          success: true, 
+          subscription: session.subscription,
+          customer: session.customer,
+        });
+      } else {
+        res.json({ success: false, status: session.payment_status });
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      res.status(500).json({ error: "Failed to verify subscription" });
+    }
+  });
+
+  // Get Stripe publishable key for frontend
+  app.get("/api/stripe/config", async (_req, res) => {
+    try {
+      const publishableKey = await getStripePublishableKey();
+      res.json({ publishableKey });
+    } catch (error) {
+      console.error("Stripe config error:", error);
+      res.status(500).json({ error: "Stripe not configured" });
     }
   });
 
