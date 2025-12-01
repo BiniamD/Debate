@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { debateRequestSchema, debateResponseSchema, type DebateResponse } from "@shared/schema";
 import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
+import { setupAuth, isAuthenticated, optionalAuth } from "./replitAuth";
 
 // Using the javascript_anthropic blueprint
 // The newest Anthropic model is "claude-sonnet-4-20250514"
@@ -45,9 +46,46 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Setup Replit Auth
+  await setupAuth(app);
+
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // Get authenticated user (returns null for anonymous users, not 401)
+  app.get("/api/auth/user", optionalAuth, async (req: any, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+        return res.json(null);
+      }
+      const replitSub = req.user.claims.sub;
+      const user = await storage.getUserByReplitSub(replitSub);
+      if (!user) {
+        return res.json(null);
+      }
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.json(null);
+    }
+  });
+
+  // Get user's debate history
+  app.get("/api/user/debates", isAuthenticated, async (req: any, res) => {
+    try {
+      const replitSub = req.user.claims.sub;
+      const user = await storage.getUserByReplitSub(replitSub);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const debates = await storage.getDebatesByUser(user.id, 30);
+      res.json(debates);
+    } catch (error) {
+      console.error("Error fetching debates:", error);
+      res.status(500).json({ message: "Failed to fetch debates" });
+    }
   });
 
   // Get debate by ID (for shared links)
@@ -144,8 +182,8 @@ export async function registerRoutes(
     }
   });
 
-  // Debate generation endpoint
-  app.post("/api/debate", async (req, res) => {
+  // Debate generation endpoint (optional auth - works for both logged in and anonymous users)
+  app.post("/api/debate", optionalAuth, async (req: any, res) => {
     try {
       // Validate request body
       const parseResult = debateRequestSchema.safeParse(req.body);
@@ -157,6 +195,30 @@ export async function registerRoutes(
       }
 
       const { symbol, context } = parseResult.data;
+
+      // Get user ID if authenticated
+      let userId: number | null = null;
+      if (req.isAuthenticated() && req.user?.claims?.sub) {
+        const user = await storage.getUserByReplitSub(req.user.claims.sub);
+        if (user) {
+          userId = user.id;
+          
+          // Update user's monthly debate count
+          const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+          if (user.lastDebateMonth !== currentMonth) {
+            // New month, reset count
+            await storage.updateUser(user.id, { 
+              debatesThisMonth: 1, 
+              lastDebateMonth: currentMonth 
+            });
+          } else {
+            // Same month, increment count
+            await storage.updateUser(user.id, { 
+              debatesThisMonth: user.debatesThisMonth + 1 
+            });
+          }
+        }
+      }
 
       // Build user message
       let userMessage = `Analyze the stock: ${symbol.toUpperCase()}`;
@@ -203,8 +265,8 @@ export async function registerRoutes(
         });
       }
 
-      // Save debate to database (userId null for anonymous users)
-      const debate = await storage.createDebate(null, symbol, context, validationResult.data);
+      // Save debate to database (linked to user if authenticated)
+      const debate = await storage.createDebate(userId, symbol, context, validationResult.data);
 
       // Return result with debate ID for sharing
       res.json({

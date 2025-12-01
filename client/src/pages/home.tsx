@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useDebateLimit } from "@/hooks/use-debate-limit";
 import { PaywallModal, DebateCounter } from "@/components/paywall-modal";
 import type { DebateResponse, Perspective } from "@shared/schema";
@@ -17,8 +18,12 @@ import {
   Minus,
   Link2,
   CheckCircle,
+  LogIn,
+  LogOut,
+  User,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface DebateWithId extends DebateResponse {
   id: string;
@@ -106,7 +111,15 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false);
   const { toast } = useToast();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  // Use server-side rate limiting for logged-in users, localStorage for anonymous
+  const serverIsPro = isAuthenticated && user?.isPremium;
   const { remaining, canGenerate, isPro, recordDebate } = useDebateLimit();
+  
+  // Logged-in Pro users bypass local rate limiting
+  const effectiveCanGenerate = serverIsPro || canGenerate;
+  const effectiveIsPro = serverIsPro || isPro;
 
   const debateMutation = useMutation({
     mutationFn: async (data: { symbol: string; context?: string }) => {
@@ -122,7 +135,10 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setDebate(data);
-      recordDebate(); // Track usage after successful generation
+      // Only track local usage for anonymous users (Pro users tracked server-side)
+      if (!serverIsPro) {
+        recordDebate();
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -167,7 +183,7 @@ export default function Home() {
     }
     
     // Check rate limit
-    if (!canGenerate) {
+    if (!effectiveCanGenerate) {
       setShowPaywall(true);
       return;
     }
@@ -215,6 +231,51 @@ export default function Home() {
   return (
     <div className="gradient-bg min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto">
+        {/* Top Navigation */}
+        <nav className="flex justify-end mb-4">
+          {authLoading ? (
+            <div className="h-10" />
+          ) : isAuthenticated && user ? (
+            <div className="flex items-center gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={user.profileImageUrl || undefined} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-slate-300 text-sm hidden sm:inline" data-testid="text-user-name">
+                {user.firstName || user.email || "User"}
+              </span>
+              {effectiveIsPro && (
+                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full" data-testid="badge-pro">
+                  Pro
+                </span>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-slate-300"
+                onClick={() => window.location.href = "/api/logout"}
+                data-testid="button-logout"
+              >
+                <LogOut className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">Log out</span>
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-white/20 text-white"
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-login"
+            >
+              <LogIn className="h-4 w-4 mr-2" />
+              Log in
+            </Button>
+          )}
+        </nav>
+
         {/* Header */}
         <header className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
@@ -230,7 +291,7 @@ export default function Home() {
             AI-powered bull, bear, and neutral perspectives on any stock
           </p>
           <div className="flex justify-center">
-            <DebateCounter remaining={remaining} isPro={isPro} onUpgrade={handleUpgrade} />
+            <DebateCounter remaining={remaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
           </div>
         </header>
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { pgTable, text, serial, timestamp, json, varchar, boolean, integer } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import { pgTable, text, serial, timestamp, json, varchar, boolean, integer, index, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
 // Zod schemas for API validation
@@ -24,16 +25,31 @@ export type Perspective = z.infer<typeof perspectiveSchema>;
 export type DebateResponse = z.infer<typeof debateResponseSchema>;
 export type DebateRequest = z.infer<typeof debateRequestSchema>;
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
 // Database tables
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  email: text("email"),
-  profileImageUrl: text("profile_image_url"),
+  replitSub: varchar("replit_sub").unique(), // Replit Auth identifier
+  email: varchar("email"),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
   isPremium: boolean("is_premium").default(false).notNull(),
-  debatesUsedToday: integer("debates_used_today").default(0).notNull(),
-  lastDebateDate: text("last_debate_date"),
+  stripeCustomerId: varchar("stripe_customer_id"),
+  debatesThisMonth: integer("debates_this_month").default(0).notNull(),
+  lastDebateMonth: varchar("last_debate_month"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const debates = pgTable("debates", {
@@ -49,6 +65,7 @@ export const debates = pgTable("debates", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertDebateSchema = createInsertSchema(debates).omit({
@@ -58,5 +75,12 @@ export const insertDebateSchema = createInsertSchema(debates).omit({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = {
+  replitSub: string;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  profileImageUrl?: string | null;
+};
 export type Debate = typeof debates.$inferSelect;
 export type InsertDebate = z.infer<typeof insertDebateSchema>;
