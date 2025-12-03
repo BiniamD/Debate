@@ -20,9 +20,18 @@ The application follows the Coinbase Design System aesthetic with clean, Swiss-i
 ## Application Routes
 
 - `/` - Landing page with hero section, features overview, and pricing tiers
-- `/analyze` - Stock analysis page with symbol input and debate generation
+- `/app` - Dashboard with Analyze (default) and History tabs (requires authentication)
+- `/app?tab=history` - Deep link to History tab on dashboard
 - `/debate/:id` - Public shareable debate view (no auth required)
-- `/history` - User's saved debate history (requires authentication)
+- `/checkout/success` - Stripe checkout success page
+
+## Navigation Architecture
+
+**Unified App Shell Pattern:**
+- AppLayout component (client/src/components/app-layout.tsx) provides persistent header for authenticated pages
+- Dashboard page (client/src/pages/dashboard.tsx) combines Analyze and History into tab-based interface
+- Landing page remains separate for marketing purposes
+- Login redirects to /app (not landing page)
 
 ## User Preferences
 
