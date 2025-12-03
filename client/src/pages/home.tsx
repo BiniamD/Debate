@@ -22,10 +22,15 @@ import {
   LogOut,
   User,
   History,
+  ArrowRight,
+  BarChart3,
+  Shield,
+  Zap,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface DebateWithId extends DebateResponse {
   id: string;
@@ -41,7 +46,6 @@ function PerspectiveCard({
   type: "bull" | "bear" | "neutral";
   animationClass: string;
 }) {
-  // Coinbase design system colors
   const config = {
     bull: {
       icon: TrendingUp,
@@ -110,6 +114,20 @@ function PerspectiveCard({
   );
 }
 
+function FeatureItem({ icon: Icon, title, description, testId }: { icon: any; title: string; description: string; testId: string }) {
+  return (
+    <div className="flex items-start gap-3" data-testid={testId}>
+      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#0052FF]/10 flex items-center justify-center">
+        <Icon className="w-5 h-5 text-[#0052FF]" />
+      </div>
+      <div>
+        <h4 className="font-medium text-foreground" data-testid={`${testId}-title`}>{title}</h4>
+        <p className="text-sm text-muted-foreground" data-testid={`${testId}-desc`}>{description}</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [symbol, setSymbol] = useState("");
   const [context, setContext] = useState("");
@@ -121,23 +139,16 @@ export default function Home() {
   
   const FREE_TIER_LIMIT = 3;
   
-  // Use server-side rate limiting for logged-in users, localStorage for anonymous
   const serverIsPro = isAuthenticated && user?.isPremium;
   const { remaining: localRemaining, canGenerate: localCanGenerate, isPro: localIsPro, recordDebate } = useDebateLimit();
   
-  // For logged-in users: use server's debatesThisMonth directly
-  // No optimistic tracking needed - just check server state + disable while loading
   const serverDebatesThisMonth = user?.debatesThisMonth ?? 0;
   const serverRemaining = FREE_TIER_LIMIT - serverDebatesThisMonth;
   
-  // Determine if user can generate based on their status
-  // Block while auth is loading OR refetching to prevent race conditions
-  // authLoading = true during initial load
-  // authFetching = true during initial load AND during refetch after mutation
   const effectiveRemaining = isAuthenticated ? Math.max(0, serverRemaining) : localRemaining;
   const authBusy = authLoading || (isAuthenticated && authFetching);
   const effectiveCanGenerate = authBusy
-    ? false // Block while loading/refetching to prevent race conditions
+    ? false
     : (serverIsPro || (isAuthenticated ? serverRemaining > 0 : localCanGenerate));
   const effectiveIsPro = serverIsPro || localIsPro;
 
@@ -146,12 +157,10 @@ export default function Home() {
       const response = await apiRequest("POST", "/api/debate", data);
       const json = await response.json();
       
-      // Check for rate limit error
       if (response.status === 429) {
         throw new Error("RATE_LIMIT_EXCEEDED");
       }
       
-      // Validate the response has the expected structure
       if (!json.bull?.title || !json.bear?.title || !json.neutral?.title || !json.id) {
         throw new Error("Invalid response structure from AI");
       }
@@ -160,17 +169,13 @@ export default function Home() {
     },
     onSuccess: (data) => {
       setDebate(data);
-      // Track usage based on auth status
       if (!isAuthenticated) {
-        // Anonymous users: track in localStorage
         recordDebate();
       } else if (!serverIsPro) {
-        // Refresh user data to sync with server
         queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       }
     },
     onError: (error: Error) => {
-      // Show paywall for rate limit errors (check both custom code and HTTP status)
       if (error.message === "RATE_LIMIT_EXCEEDED" || error.message.includes("429")) {
         setShowPaywall(true);
         return;
@@ -216,7 +221,6 @@ export default function Home() {
       return;
     }
     
-    // Check rate limit
     if (!effectiveCanGenerate) {
       setShowPaywall(true);
       return;
@@ -262,11 +266,21 @@ export default function Home() {
     }
   };
 
+  const scrollToAnalysis = () => {
+    document.getElementById('analysis-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-background">
+      {/* Hero Section */}
+      <section className="relative border-b bg-gradient-to-b from-[#0052FF]/5 to-background">
         {/* Top Navigation */}
-        <nav className="flex justify-end mb-4">
+        <nav className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <MessageSquare className="w-6 h-6 text-[#0052FF]" />
+            <span className="font-semibold text-foreground">Echo Chamber</span>
+          </div>
+          
           {authLoading ? (
             <div className="h-10" />
           ) : isAuthenticated && user ? (
@@ -283,14 +297,6 @@ export default function Home() {
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <span className="text-muted-foreground text-sm hidden sm:inline" data-testid="text-user-name">
-                {user.firstName || user.email || "User"}
-              </span>
-              {effectiveIsPro && (
-                <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-2 py-0.5 rounded font-medium" data-testid="badge-pro">
-                  Pro
-                </span>
-              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -314,90 +320,199 @@ export default function Home() {
           )}
         </nav>
 
-        {/* Header */}
-        <header className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <MessageSquare className="w-10 h-10 text-[#0052FF]" />
-            <h1 className="text-4xl md:text-5xl font-semibold text-foreground" data-testid="text-app-title">
-              Echo Chamber
-            </h1>
-          </div>
-          <p className="text-xl md:text-2xl text-foreground mb-2" data-testid="text-tagline">
-            Break the echo. See every angle.
+        {/* Hero Content */}
+        <div className="max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground mb-6 leading-tight" data-testid="text-hero-title">
+            Break the echo.<br />
+            <span className="text-[#0052FF]">See every angle.</span>
+          </h1>
+          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto" data-testid="text-hero-subtitle">
+            AI-powered stock analysis that gives you bull, bear, and neutral perspectives on any investment. Make informed decisions by seeing the full picture.
           </p>
-          <p className="text-muted-foreground mb-4" data-testid="text-subtitle">
-            AI-powered bull, bear, and neutral perspectives on any stock
-          </p>
-          <div className="flex justify-center">
-            <DebateCounter remaining={effectiveRemaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
-          </div>
-        </header>
-
-        {/* Input Section */}
-        <div className="rounded-xl border bg-card p-6 md:p-8 mb-8 max-w-2xl mx-auto">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label
-                htmlFor="symbol"
-                className="block text-sm font-medium text-foreground mb-2"
-              >
-                Stock Symbol
-              </label>
-              <Input
-                id="symbol"
-                type="text"
-                value={symbol}
-                onChange={(e) => setSymbol(e.target.value.toUpperCase())}
-                placeholder="AAPL, TSLA, NVDA..."
-                className="font-mono uppercase"
-                disabled={debateMutation.isPending}
-                data-testid="input-symbol"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="context"
-                className="block text-sm font-medium text-foreground mb-2"
-              >
-                Context (Optional)
-              </label>
-              <Textarea
-                id="context"
-                value={context}
-                onChange={(e) => setContext(e.target.value)}
-                placeholder="E.g., 'Considering buying for long-term hold'..."
-                rows={3}
-                className="resize-none"
-                disabled={debateMutation.isPending}
-                data-testid="input-context"
-              />
-            </div>
-
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
-              type="submit"
-              disabled={debateMutation.isPending || !symbol.trim() || !effectiveCanGenerate}
-              className="w-full bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
-              data-testid="button-generate"
+              size="lg"
+              className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
+              onClick={scrollToAnalysis}
+              data-testid="button-get-started"
             >
-              {debateMutation.isPending ? (
-                <>
-                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                  Generating Debate...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Generate Debate
-                </>
-              )}
+              Get Started
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-          </form>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })}
+              data-testid="button-learn-more"
+            >
+              Learn More
+            </Button>
+          </div>
         </div>
+      </section>
 
-        {/* Results Section */}
-        {debate && (
-          <div className="space-y-6">
+      {/* Features Section */}
+      <section id="features-section" className="py-16 border-b">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8">
+            <FeatureItem
+              icon={BarChart3}
+              title="Multi-Perspective Analysis"
+              description="Get bull, bear, and neutral viewpoints powered by Claude AI"
+              testId="feature-multi-perspective"
+            />
+            <FeatureItem
+              icon={Zap}
+              title="Instant Insights"
+              description="Analyze any stock symbol in seconds with detailed key points"
+              testId="feature-instant-insights"
+            />
+            <FeatureItem
+              icon={Shield}
+              title="Shareable Debates"
+              description="Share your analysis on social media or copy a public link"
+              testId="feature-shareable"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Auth Status & Analysis Section */}
+      <section id="analysis-section" className="py-12 px-4">
+        <div className="max-w-2xl mx-auto space-y-6">
+          
+          {/* Account Status Card */}
+          <Card>
+            <CardContent className="p-6">
+              {authLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : isAuthenticated && user ? (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage src={user.profileImageUrl || undefined} />
+                      <AvatarFallback>
+                        <User className="h-6 w-6" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-medium text-foreground" data-testid="text-user-name">
+                        {user.firstName || user.email || "User"}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        {effectiveIsPro ? (
+                          <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-2 py-0.5 rounded font-medium" data-testid="badge-pro">
+                            Pro Member
+                          </span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Free Plan</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <DebateCounter remaining={effectiveRemaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div>
+                    <h3 className="font-medium text-foreground mb-1">Sign in to save your debates</h3>
+                    <p className="text-sm text-muted-foreground">Track your analysis history and access debates across devices</p>
+                  </div>
+                  <Button
+                    onClick={() => window.location.href = "/api/login"}
+                    className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
+                    data-testid="button-login-cta"
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Sign in with Replit
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Analysis Form Card */}
+          <Card>
+            <CardContent className="p-6 md:p-8">
+              <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-[#0052FF]" />
+                Analyze a Stock
+              </h2>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label
+                    htmlFor="symbol"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
+                    Stock Symbol
+                  </label>
+                  <Input
+                    id="symbol"
+                    type="text"
+                    value={symbol}
+                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    placeholder="AAPL, TSLA, NVDA..."
+                    className="font-mono uppercase"
+                    disabled={debateMutation.isPending}
+                    data-testid="input-symbol"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="context"
+                    className="block text-sm font-medium text-foreground mb-2"
+                  >
+                    Context (Optional)
+                  </label>
+                  <Textarea
+                    id="context"
+                    value={context}
+                    onChange={(e) => setContext(e.target.value)}
+                    placeholder="E.g., 'Considering buying for long-term hold'..."
+                    rows={3}
+                    className="resize-none"
+                    disabled={debateMutation.isPending}
+                    data-testid="input-context"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={debateMutation.isPending || !symbol.trim() || !effectiveCanGenerate}
+                  className="w-full bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
+                  data-testid="button-generate"
+                >
+                  {debateMutation.isPending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                      Generating Debate...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5 mr-2" />
+                      Generate Debate
+                    </>
+                  )}
+                </Button>
+
+                {!isAuthenticated && (
+                  <div className="flex justify-center">
+                    <DebateCounter remaining={effectiveRemaining} isPro={effectiveIsPro} onUpgrade={handleUpgrade} />
+                  </div>
+                )}
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Results Section */}
+      {debate && (
+        <section className="py-8 px-4">
+          <div className="max-w-6xl mx-auto space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="text-2xl font-semibold text-foreground">
                 Analysis for{" "}
@@ -452,18 +567,24 @@ export default function Home() {
               />
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Footer */}
-        <footer className="mt-16 text-center space-y-3">
+      {/* Footer */}
+      <footer className="py-12 border-t">
+        <div className="max-w-4xl mx-auto px-4 text-center space-y-3">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <MessageSquare className="w-5 h-5 text-[#0052FF]" />
+            <span className="font-semibold text-foreground">Echo Chamber</span>
+          </div>
           <p className="text-muted-foreground text-sm" data-testid="text-pricing">
             Free: 3 debates/month | Pro ($9/mo): Unlimited debates
           </p>
           <p className="text-muted-foreground/60 text-xs" data-testid="text-disclaimer">
             Not financial advice. AI-generated perspectives for educational purposes only.
           </p>
-        </footer>
-      </div>
+        </div>
+      </footer>
 
       {/* Paywall Modal */}
       <PaywallModal
