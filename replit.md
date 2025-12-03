@@ -6,7 +6,7 @@ Echo Chamber is a full-stack web application that provides multi-perspective AI 
 
 The name "Echo Chamber" is ironic - while the term typically refers to a space where only one viewpoint is reinforced, this platform deliberately breaks the echo by presenting multiple opposing perspectives.
 
-The application follows a modern fintech aesthetic with a premium dark theme, glass morphism design elements, and clear visual separation between different perspectives through color coding.
+The application follows the Coinbase Design System aesthetic with clean, Swiss-inspired design, flat UI elements, and clear visual separation between different perspectives through color coding.
 
 ## Key Features
 
@@ -40,12 +40,13 @@ Preferred communication style: Simple, everyday language.
 - Custom query client with centralized API request handling
 - No global client state - relies on server state and local component state
 
-**Styling Approach**
-- Dark-first design with gradient backgrounds (slate-900 to blue-900 spectrum)
-- Glass morphism cards with semi-transparent overlays and backdrop blur
-- Consistent spacing scale (4, 6, 8, 12, 16 Tailwind units)
-- Color-coded perspectives: green for bull, red for bear, blue for neutral
-- Custom CSS variables for flexible theming
+**Styling Approach (Coinbase Design System)**
+- Clean, flat design with light/dark mode support
+- Primary blue (#0052FF) for key actions and branding
+- Coinbase semantic colors: green (#00D395) for bull, red (#FF5F57) for bear, blue (#0052FF) for neutral
+- Consistent spacing scale following 4px base unit
+- Inter font family for clean, modern typography
+- Minimal shadows, relying on borders and subtle backgrounds
 
 ### Backend Architecture
 
