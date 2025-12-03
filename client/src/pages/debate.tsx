@@ -136,7 +136,7 @@ export default function DebatePage() {
           <p className="text-muted-foreground mb-6">
             This debate doesn't exist or has been removed.
           </p>
-          <Link href="/">
+          <Link href="/analyze">
             <Button className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white" data-testid="button-back-home">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Create Your Own
@@ -196,7 +196,7 @@ export default function DebatePage() {
               <SiX className="w-4 h-4 mr-2" />
               Share on X
             </Button>
-            <Link href="/">
+            <Link href="/analyze">
               <Button className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white" data-testid="button-create-new">
                 Create Your Own
               </Button>
@@ -231,7 +231,7 @@ export default function DebatePage() {
           <p className="text-muted-foreground mb-6">
             Get bull, bear, and neutral analysis on any stock in seconds.
           </p>
-          <Link href="/">
+          <Link href="/analyze">
             <Button size="lg" className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white" data-testid="button-cta">
               Try Echo Chamber Free
             </Button>

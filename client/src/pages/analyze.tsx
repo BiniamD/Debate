@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useDebateLimit } from "@/hooks/use-debate-limit";
 import { PaywallModal, DebateCounter } from "@/components/paywall-modal";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { DebateResponse, Perspective } from "@shared/schema";
 import {
   MessageSquare,
@@ -22,15 +24,10 @@ import {
   LogOut,
   User,
   History,
-  ArrowRight,
-  BarChart3,
-  Shield,
-  Zap,
+  ArrowLeft,
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 import { Link } from "wouter";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
 
 interface DebateWithId extends DebateResponse {
   id: string;
@@ -114,21 +111,7 @@ function PerspectiveCard({
   );
 }
 
-function FeatureItem({ icon: Icon, title, description, testId }: { icon: any; title: string; description: string; testId: string }) {
-  return (
-    <div className="flex items-start gap-3" data-testid={testId}>
-      <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-[#0052FF]/10 flex items-center justify-center">
-        <Icon className="w-5 h-5 text-[#0052FF]" />
-      </div>
-      <div>
-        <h4 className="font-medium text-foreground" data-testid={`${testId}-title`}>{title}</h4>
-        <p className="text-sm text-muted-foreground" data-testid={`${testId}-desc`}>{description}</p>
-      </div>
-    </div>
-  );
-}
-
-export default function Home() {
+export default function Analyze() {
   const [symbol, setSymbol] = useState("");
   const [context, setContext] = useState("");
   const [debate, setDebate] = useState<DebateWithId | null>(null);
@@ -266,20 +249,18 @@ export default function Home() {
     }
   };
 
-  const scrollToAnalysis = () => {
-    document.getElementById('analysis-section')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <section className="relative border-b bg-gradient-to-b from-[#0052FF]/5 to-background">
-        {/* Top Navigation */}
-        <nav className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <MessageSquare className="w-6 h-6 text-[#0052FF]" />
-            <span className="font-semibold text-foreground">Echo Chamber</span>
-          </div>
+      {/* Header */}
+      <header className="border-b">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/">
+            <div className="flex items-center gap-2 cursor-pointer group">
+              <ArrowLeft className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+              <MessageSquare className="w-6 h-6 text-[#0052FF]" />
+              <span className="font-semibold text-foreground">Echo Chamber</span>
+            </div>
+          </Link>
           
           {authLoading ? (
             <div className="h-10" />
@@ -297,6 +278,14 @@ export default function Home() {
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
+              <span className="text-muted-foreground text-sm hidden sm:inline" data-testid="text-user-name">
+                {user.firstName || user.email || "User"}
+              </span>
+              {effectiveIsPro && (
+                <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-2 py-0.5 rounded font-medium" data-testid="badge-pro">
+                  Pro
+                </span>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -318,69 +307,12 @@ export default function Home() {
               Log in
             </Button>
           )}
-        </nav>
-
-        {/* Hero Content */}
-        <div className="max-w-4xl mx-auto px-4 py-16 md:py-24 text-center">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground mb-6 leading-tight" data-testid="text-hero-title">
-            Break the echo.<br />
-            <span className="text-[#0052FF]">See every angle.</span>
-          </h1>
-          <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto" data-testid="text-hero-subtitle">
-            AI-powered stock analysis that gives you bull, bear, and neutral perspectives on any investment. Make informed decisions by seeing the full picture.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
-              onClick={scrollToAnalysis}
-              data-testid="button-get-started"
-            >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => document.getElementById('features-section')?.scrollIntoView({ behavior: 'smooth' })}
-              data-testid="button-learn-more"
-            >
-              Learn More
-            </Button>
-          </div>
         </div>
-      </section>
+      </header>
 
-      {/* Features Section */}
-      <section id="features-section" className="py-16 border-b">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureItem
-              icon={BarChart3}
-              title="Multi-Perspective Analysis"
-              description="Get bull, bear, and neutral viewpoints powered by Claude AI"
-              testId="feature-multi-perspective"
-            />
-            <FeatureItem
-              icon={Zap}
-              title="Instant Insights"
-              description="Analyze any stock symbol in seconds with detailed key points"
-              testId="feature-instant-insights"
-            />
-            <FeatureItem
-              icon={Shield}
-              title="Shareable Debates"
-              description="Share your analysis on social media or copy a public link"
-              testId="feature-shareable"
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Auth Status & Analysis Section */}
-      <section id="analysis-section" className="py-12 px-4">
+      {/* Main Content */}
+      <main className="py-8 px-4">
         <div className="max-w-2xl mx-auto space-y-6">
-          
           {/* Account Status Card */}
           <Card>
             <CardContent className="p-6">
@@ -398,12 +330,12 @@ export default function Home() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium text-foreground" data-testid="text-user-name">
+                      <p className="font-medium text-foreground" data-testid="text-user-name-card">
                         {user.firstName || user.email || "User"}
                       </p>
                       <div className="flex items-center gap-2">
                         {effectiveIsPro ? (
-                          <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-2 py-0.5 rounded font-medium" data-testid="badge-pro">
+                          <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-2 py-0.5 rounded font-medium" data-testid="badge-pro-card">
                             Pro Member
                           </span>
                         ) : (
@@ -507,12 +439,10 @@ export default function Home() {
             </CardContent>
           </Card>
         </div>
-      </section>
 
-      {/* Results Section */}
-      {debate && (
-        <section className="py-8 px-4">
-          <div className="max-w-6xl mx-auto space-y-6">
+        {/* Results Section */}
+        {debate && (
+          <div className="max-w-6xl mx-auto mt-8 space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
               <h2 className="text-2xl font-semibold text-foreground">
                 Analysis for{" "}
@@ -567,16 +497,12 @@ export default function Home() {
               />
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </main>
 
       {/* Footer */}
-      <footer className="py-12 border-t">
+      <footer className="py-12 border-t mt-8">
         <div className="max-w-4xl mx-auto px-4 text-center space-y-3">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MessageSquare className="w-5 h-5 text-[#0052FF]" />
-            <span className="font-semibold text-foreground">Echo Chamber</span>
-          </div>
           <p className="text-muted-foreground text-sm" data-testid="text-pricing">
             Free: 3 debates/month | Pro ($9/mo): Unlimited debates
           </p>

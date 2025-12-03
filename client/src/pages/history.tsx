@@ -144,7 +144,7 @@ export default function History() {
             <p className="text-muted-foreground mb-6">
               Generate your first debate to see it here.
             </p>
-            <Link href="/">
+            <Link href="/analyze">
               <Button className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white" data-testid="button-generate-first">
                 Generate a Debate
               </Button>
