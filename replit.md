@@ -12,9 +12,17 @@ The application follows the Coinbase Design System aesthetic with clean, Swiss-i
 
 - **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock powered by Claude Sonnet 4
 - **Shareable Debates**: Public URLs for sharing debates on Twitter/social media (/debate/:id routes)
-- **Rate Limiting**: Free tier with 3 debates/month tracked via localStorage with monthly reset
+- **Rate Limiting**: Free tier with 3 debates/month tracked server-side for authenticated users
 - **Monetization**: Free tier vs Pro ($9/month via Stripe) with paywall modal when limit reached
 - **Share Functionality**: Twitter share with pre-filled tweets and copy link to clipboard
+- **Replit Auth**: User authentication via Replit's built-in OAuth
+
+## Application Routes
+
+- `/` - Landing page with hero section, features overview, and pricing tiers
+- `/analyze` - Stock analysis page with symbol input and debate generation
+- `/debate/:id` - Public shareable debate view (no auth required)
+- `/history` - User's saved debate history (requires authentication)
 
 ## User Preferences
 
