@@ -34,24 +34,24 @@ function PerspectiveCard({
   const config = {
     bull: {
       icon: TrendingUp,
-      borderColor: "border-emerald-600/40",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      titleColor: "text-emerald-700 dark:text-emerald-400",
+      borderColor: "border-green-500/50",
+      bgColor: "bg-green-500/5",
+      iconColor: "text-green-400",
+      titleColor: "text-green-400",
     },
     bear: {
       icon: TrendingDown,
-      borderColor: "border-amber-600/40",
-      bgColor: "bg-amber-50 dark:bg-amber-950/30",
-      iconColor: "text-amber-700 dark:text-amber-400",
-      titleColor: "text-amber-800 dark:text-amber-400",
+      borderColor: "border-red-500/50",
+      bgColor: "bg-red-500/5",
+      iconColor: "text-red-400",
+      titleColor: "text-red-400",
     },
     neutral: {
       icon: Minus,
-      borderColor: "border-yellow-600/40",
-      bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
-      iconColor: "text-yellow-700 dark:text-yellow-400",
-      titleColor: "text-yellow-800 dark:text-yellow-400",
+      borderColor: "border-blue-500/50",
+      bgColor: "bg-blue-500/5",
+      iconColor: "text-blue-400",
+      titleColor: "text-blue-400",
     },
   };
 
@@ -59,7 +59,7 @@ function PerspectiveCard({
 
   return (
     <div
-      className={`rounded-xl p-6 border ${borderColor} ${bgColor} ${animationClass} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+      className={`glass rounded-md p-6 ${borderColor} ${bgColor} ${animationClass} transition-transform duration-300 hover:scale-[1.02]`}
       data-testid={`card-perspective-${type}`}
     >
       <div className="flex items-center gap-3 mb-4">
@@ -69,21 +69,21 @@ function PerspectiveCard({
 
       <div className="space-y-4 mb-6">
         {perspective.argument.split("\n\n").map((paragraph, idx) => (
-          <p key={idx} className="text-amber-800 dark:text-amber-100 leading-relaxed">
+          <p key={idx} className="text-slate-300 leading-relaxed">
             {paragraph}
           </p>
         ))}
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+        <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wide">
           Key Points
         </h4>
         <ul className="space-y-2">
           {perspective.keyPoints.map((point, idx) => (
             <li
               key={idx}
-              className="flex items-start gap-2 text-amber-800 dark:text-amber-100"
+              className="flex items-start gap-2 text-slate-300"
               data-testid={`text-keypoint-${type}-${idx}`}
             >
               <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${iconColor.replace("text-", "bg-")} flex-shrink-0`} />
@@ -116,10 +116,10 @@ export default function DebatePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-950 dark:via-stone-950 dark:to-amber-950">
+      <div className="gradient-bg min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-600 dark:text-emerald-400" />
-          <p className="text-amber-700 dark:text-amber-300">Loading debate...</p>
+          <Loader2 className="w-12 h-12 animate-spin text-primary" />
+          <p className="text-slate-300">Loading debate...</p>
         </div>
       </div>
     );
@@ -127,14 +127,14 @@ export default function DebatePage() {
 
   if (error || !debate) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-950 dark:via-stone-950 dark:to-amber-950">
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-8 max-w-md text-center border border-amber-200/50 dark:border-amber-700/30">
-          <h2 className="text-2xl font-bold text-amber-900 dark:text-amber-100 mb-4">Debate Not Found</h2>
-          <p className="text-amber-700 dark:text-amber-300 mb-6">
+      <div className="gradient-bg min-h-screen flex items-center justify-center">
+        <div className="glass rounded-md p-8 max-w-md text-center">
+          <h2 className="text-2xl font-bold text-white mb-4">Debate Not Found</h2>
+          <p className="text-slate-300 mb-6">
             This debate doesn't exist or has been removed.
           </p>
           <Link href="/">
-            <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" data-testid="button-back-home">
+            <Button data-testid="button-back-home">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Create Your Own
             </Button>
@@ -145,19 +145,19 @@ export default function DebatePage() {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-950 dark:via-stone-950 dark:to-amber-950">
+    <div className="gradient-bg min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="text-center mb-8">
           <Link href="/">
             <div className="flex items-center justify-center gap-3 mb-4 cursor-pointer group">
-              <MessageSquare className="w-10 h-10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
-              <h1 className="text-4xl md:text-5xl font-bold text-amber-900 dark:text-amber-100" data-testid="text-app-title">
+              <MessageSquare className="w-10 h-10 text-primary group-hover:scale-110 transition-transform" />
+              <h1 className="text-4xl md:text-5xl font-bold text-white" data-testid="text-app-title">
                 Echo Chamber
               </h1>
             </div>
           </Link>
-          <p className="text-xl md:text-2xl text-amber-700 dark:text-amber-300 mb-2">
+          <p className="text-xl md:text-2xl text-slate-300 mb-2">
             Break the echo. See every angle.
           </p>
         </header>
@@ -165,20 +165,20 @@ export default function DebatePage() {
         {/* Analysis Header */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-amber-900 dark:text-amber-100">
+            <h2 className="text-2xl font-semibold text-white">
               Analysis for{" "}
-              <span className="text-emerald-600 dark:text-emerald-400" data-testid="text-analyzed-symbol">
+              <span className="text-primary" data-testid="text-analyzed-symbol">
                 ${debate.symbol}
               </span>
             </h2>
             {debate.createdAt && (
-              <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-sm mt-1">
+              <div className="flex items-center gap-2 text-slate-400 text-sm mt-1">
                 <Calendar className="w-4 h-4" />
                 {format(new Date(debate.createdAt), "MMMM d, yyyy 'at' h:mm a")}
               </div>
             )}
             {debate.context && (
-              <p className="text-amber-600 dark:text-amber-400 mt-2 text-sm italic">
+              <p className="text-slate-400 mt-2 text-sm italic">
                 Context: "{debate.context}"
               </p>
             )}
@@ -188,14 +188,14 @@ export default function DebatePage() {
             <Button
               variant="outline"
               onClick={handleTwitterShare}
-              className="border-amber-600/30 text-amber-800 dark:border-amber-400/30 dark:text-amber-200"
+              className="border-white/20 text-white"
               data-testid="button-share-twitter"
             >
               <SiX className="w-4 h-4 mr-2" />
               Share on X
             </Button>
             <Link href="/">
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" data-testid="button-create-new">
+              <Button data-testid="button-create-new">
                 Create Your Own
               </Button>
             </Link>
@@ -222,15 +222,15 @@ export default function DebatePage() {
         </div>
 
         {/* CTA */}
-        <div className="mt-12 text-center bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-8 border border-amber-200/50 dark:border-amber-700/30">
-          <h3 className="text-2xl font-semibold text-amber-900 dark:text-amber-100 mb-4">
+        <div className="mt-12 text-center glass rounded-md p-8">
+          <h3 className="text-2xl font-semibold text-white mb-4">
             Want AI perspectives on your stocks?
           </h3>
-          <p className="text-amber-700 dark:text-amber-300 mb-6">
+          <p className="text-slate-300 mb-6">
             Get bull, bear, and neutral analysis on any stock in seconds.
           </p>
           <Link href="/">
-            <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white" data-testid="button-cta">
+            <Button size="lg" data-testid="button-cta">
               Try Echo Chamber Free
             </Button>
           </Link>
@@ -238,10 +238,10 @@ export default function DebatePage() {
 
         {/* Footer */}
         <footer className="mt-16 text-center space-y-3">
-          <p className="text-amber-600 dark:text-amber-400 text-sm">
+          <p className="text-slate-400 text-sm">
             Free: 3 debates/month | Pro ($9/mo): Unlimited debates
           </p>
-          <p className="text-amber-500 dark:text-amber-500 text-xs">
+          <p className="text-slate-500 text-xs">
             Not financial advice. AI-generated perspectives for educational purposes only.
           </p>
         </footer>

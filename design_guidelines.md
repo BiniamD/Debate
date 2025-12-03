@@ -1,149 +1,144 @@
-# Design Guidelines for "Echo Chamber" AI Trading Coach
+# Design Guidelines for "Debate" AI Trading Coach
 
 ## Design Approach
-**Reference-Based**: Modern fintech clarity (Robinhood + Stripe) meets organic warmth. EcoHoney theme combines professional credibility with approachable, natural aesthetics - warm honey/amber/gold foundation with eco-friendly green accents for a trustworthy, human-centered interface.
+**Reference-Based**: Financial data tools aesthetic inspired by modern fintech applications (Robinhood's clarity + Stripe's restraint + contemporary trading platforms). Dark, premium feel with glass-morphism for a sophisticated, trustworthy interface.
 
 ## Core Design Principles
-- **Single Focus**: One killer feature executed flawlessly
-- **Organic Warmth**: Honey-toned palette creates trust and reduces cognitive load
-- **Perspective Clarity**: Each viewpoint instantly recognizable through warm color coding
-- **Natural Credibility**: Professional financial tool with approachable, earth-toned aesthetic
+- **Single Focus**: One killer feature executed flawlessly - no distractions
+- **Premium Dark Theme**: Establish credibility and reduce eye strain for data-heavy content
+- **Perspective Clarity**: Each viewpoint (bull/bear/neutral) must be instantly recognizable through color coding
 
 ## Layout System
 
-**Spacing**: Tailwind units of 4, 6, 8, 12, and 16 for consistent rhythm.
+**Spacing**: Use Tailwind units of 4, 6, 8, 12, and 16 for consistent rhythm throughout the application.
 
 **Structure**:
-- Centered single-column layout (max-w-4xl)
-- Header with branding and value proposition
-- Input section as elevated focal card
+- Centered single-column layout with max-width container
+- Header section with branding and clear value proposition
+- Input section as focal glass card
 - Results grid: 3-column desktop (equal width), single-column mobile
-- Footer with pricing and educational disclaimer
+- Footer with pricing and disclaimer
 
 ## Visual Aesthetics
 
 **Background Treatment**:
-- Warm gradient: cream (50) to honey (100) to amber (50) spectrum
-- Subtle organic texture overlay suggestion through gradient layers
-- Light, inviting foundation that doesn't compete with content
+- Dark gradient background (slate-900 to blue-900 spectrum)
+- Creates depth and premium feel without overwhelming content
 
-**Card Design Philosophy**:
-- Soft, organic cards with warm white/cream backgrounds
-- Gentle shadows for depth without harshness
-- Subtle honey-tinted borders for warmth
-- Rounded corners (lg to xl) for natural, friendly feel
+**Glass Morphism Cards**:
+- Semi-transparent white overlay with backdrop blur
+- Subtle white borders for definition
+- Elevated feel with soft shadows
 
 ## Typography Hierarchy
 
 **Headers**:
-- Extra-large bold for main title with icon (text-amber-900)
-- Medium weight tagline in warm gray (conversational tone)
-- Regular weight subtitle (text-amber-700)
+- Large, bold for main title with icon pairing
+- Medium weight for tagline (engaging, conversational)
+- Lighter weight for subtitle (informational)
 
 **Body Text**:
-- Rich dark brown/amber for headers (900 weights)
-- Warm gray for body text (700-600 weights)
-- Lighter honey-gray for secondary content (500 weights)
+- Clear contrast between white headers and lighter gray body text
+- Medium-sized key points for scannability
+- Smaller muted text for disclaimer and footer content
 
 ## Component Design
 
 ### Input Section
-- Elevated card with warm cream background (amber-50/white mix)
-- Stock symbol input: uppercase, honey-toned focus ring (amber-400)
-- Context textarea: 3 rows, warm placeholder text
-- Primary button: Rich eco-green (emerald-600), gold hover state, leaf/sparkle icon
-- Loading state: Rotating honey-gold spinner
-- Error messages: Warm red-orange (rose-600), clear visibility
+- Prominent glass card elevated above background
+- Stock symbol input: uppercase transformation, clear placeholder examples
+- Optional context textarea: 3 rows, conversational placeholder
+- Primary action button: vibrant blue, clear icon pairing
+- Loading state: centered spinning icon
+- Error messages: red accent, clear visibility
 
-### Perspective Cards
+### Perspective Cards (Core Feature)
+Three distinct but harmonious card designs:
 
 **Bull Card (Optimistic)**:
-- Eco-green accent (emerald-600 for borders, emerald-500 for icon)
-- Soft green-tinted background (emerald-50)
+- Green accent color (borders, icon, background tint)
 - Upward trending icon
-- Growth, sustainability visual language
+- Positive, growth-focused visual language
 
-**Bear Card (Cautionary)**:
-- Warm amber accent (amber-700 for borders, amber-600 for icon)
-- Honey-tinted background (amber-50)
+**Bear Card (Pessimistic)**:
+- Red accent color (borders, icon, background tint)
 - Downward trending icon
-- Warning with warmth, not alarm
+- Warning, cautionary visual language
 
 **Neutral Card (Balanced)**:
-- Golden honey accent (yellow-600/amber-500 for borders and icon)
-- Warm gold-tinted background (yellow-50/amber-50 mix)
-- Horizontal/neutral icon
-- Balanced, data-driven visual language
+- Blue accent color (borders, icon, background tint)
+- Neutral/horizontal icon
+- Data-driven, objective visual language
 
 **Card Structure** (all three):
-- Icon top-left (immediate recognition)
-- Bold title header in matching accent color
-- Multi-paragraph text with generous line-height (1.7-1.8)
-- Bulleted key points (3 items, matching accent colored bullets)
-- Gentle background tint (accent at 8% opacity)
-- Border with accent color (40% opacity)
-- Soft shadow for elevation
+- Icon positioned top-left for immediate recognition
+- Title as header
+- Multi-paragraph argument text with breathing room
+- Bulleted key points list (3 items)
+- Subtle background tint matching accent color (5% opacity)
+- Border accent matching theme color (50% opacity)
 
 ### Interactive Elements
-- Share button: Secondary honey-gold outline, share icon
-- Smooth hover transitions to darker/richer tones
-- Cards with subtle lift on hover (shadow deepens, slight translate-y)
+- Share button: secondary prominence, share icon
+- Buttons with smooth hover states (darker variants)
+- Cards with subtle scale transform on hover (1.05x)
 
 ## Animations & Transitions
 
-**Entrance**:
-- Cards fade in with gentle upward movement (15px)
-- 0.6s ease-out for organic, relaxed feel
-- Staggered 100ms delay between cards
+**Entrance Animations**:
+- Results cards: fade in with upward movement (20px translation)
+- 0.5s ease-out timing for smooth, professional feel
+- Staggered appearance feels natural without being distracting
 
 **Micro-interactions**:
-- Gentle scale (1.02x) and shadow enhancement on card hover
-- Button hover: Subtle darkening with smooth transition
-- Focus states: Warm honey-gold rings
+- Hover scale on cards for tactile feedback
+- Button hover states for clear affordance
+- Loading spinner rotation for activity indication
 
 ## Responsive Behavior
 
-**Mobile**: Single column, full-width cards, reduced spacing (units 4, 6, 8)
-**Desktop** (md+): 3-column grid, max-w-6xl container, generous spacing (units 8, 12, 16)
+**Mobile** (base):
+- Single column stack
+- Full-width cards
+- Maintained spacing hierarchy (smaller units)
+
+**Desktop** (md breakpoint):
+- 3-column grid for perspective cards
+- Wider max-width container
+- Increased spacing for breathing room
 
 ## Color Palette
 
-**Perspectives**:
-- Bull: Eco-green (emerald-600/500 spectrum)
-- Bear: Warm amber (amber-700/600 spectrum)
-- Neutral: Golden honey (yellow-600/amber-500 spectrum)
+**Perspectives** (accent colors only):
+- Bull: Green (#10b981 spectrum)
+- Bear: Red (#ef4444 spectrum)
+- Neutral: Blue (#3b82f6 spectrum)
 
 **Base UI**:
-- Backgrounds: Cream to honey gradients (amber-50 to yellow-50)
-- Card surfaces: Warm white (stone-50/amber-50)
-- Text: Deep amber-brown (amber-900/800) for emphasis, amber-700/600 for body
-- Primary action: Eco-green (emerald-600)
-- Accents: Honey-gold (amber-400/500)
+- Backgrounds: Dark slate and blue gradients
+- Text: White for emphasis, light gray for body, muted gray for secondary
+- Glass elements: Semi-transparent white overlays
+- Primary action: Vibrant blue
 
 ## Iconography
-**lucide-react icons**:
-- Leaf + MessageSquare for eco-friendly branding
-- TrendingUp (bull), TrendingDown (bear), Minus (neutral)
-- Sparkles for generate
-- Loader2 for loading
-- Share2 for sharing
+Use lucide-react icons:
+- MessageSquare for branding
+- TrendingUp, TrendingDown, Minus for perspectives
+- Sparkles for generate action
+- Loader2 for loading state
+- Share2 for sharing functionality
 
 ## Special Considerations
 
-**Trust Through Warmth**:
-- Organic palette builds approachability and credibility
-- Clear disclaimer in warm tone (not hidden)
-- Balanced presentation honors all perspectives
+**Trust & Credibility**:
+- Dark premium aesthetic builds confidence
+- Clear disclaimer in footer (not hidden)
+- Balanced presentation of all perspectives
 
 **Educational Focus**:
-- Footer emphasizes learning over advice (amber-700 text)
-- Transparent pricing (free tier + paid, honey-gold callout)
-- No misleading promises
-
-**Accessibility**:
-- Maintain 4.5:1+ contrast ratios with warm tones
-- Focus indicators in amber-400 ring
-- Clear visual hierarchy through size and weight
+- Footer messaging emphasizes learning over financial advice
+- Pricing clarity upfront (free tier with paid upgrade)
+- No misleading promises or guarantees
 
 ## Images
-No hero images. Utility-focused tool where immediate functionality and warm, welcoming interface take precedence over visual storytelling. The organic color palette creates sufficient visual interest.
+No hero images. This is a utility-focused tool where functionality and immediate usability take precedence over visual storytelling.

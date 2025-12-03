@@ -44,24 +44,24 @@ function PerspectiveCard({
   const config = {
     bull: {
       icon: TrendingUp,
-      borderColor: "border-emerald-600/40",
-      bgColor: "bg-emerald-50 dark:bg-emerald-950/30",
-      iconColor: "text-emerald-600 dark:text-emerald-400",
-      titleColor: "text-emerald-700 dark:text-emerald-400",
+      borderColor: "border-green-500/50",
+      bgColor: "bg-green-500/5",
+      iconColor: "text-green-400",
+      titleColor: "text-green-400",
     },
     bear: {
       icon: TrendingDown,
-      borderColor: "border-amber-600/40",
-      bgColor: "bg-amber-50 dark:bg-amber-950/30",
-      iconColor: "text-amber-700 dark:text-amber-400",
-      titleColor: "text-amber-800 dark:text-amber-400",
+      borderColor: "border-red-500/50",
+      bgColor: "bg-red-500/5",
+      iconColor: "text-red-400",
+      titleColor: "text-red-400",
     },
     neutral: {
       icon: Minus,
-      borderColor: "border-yellow-600/40",
-      bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
-      iconColor: "text-yellow-700 dark:text-yellow-400",
-      titleColor: "text-yellow-800 dark:text-yellow-400",
+      borderColor: "border-blue-500/50",
+      bgColor: "bg-blue-500/5",
+      iconColor: "text-blue-400",
+      titleColor: "text-blue-400",
     },
   };
 
@@ -69,7 +69,7 @@ function PerspectiveCard({
 
   return (
     <div
-      className={`rounded-xl p-6 border ${borderColor} ${bgColor} ${animationClass} transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}
+      className={`glass rounded-md p-6 ${borderColor} ${bgColor} ${animationClass} transition-transform duration-300 hover:scale-[1.02]`}
       data-testid={`card-perspective-${type}`}
     >
       <div className="flex items-center gap-3 mb-4">
@@ -79,21 +79,21 @@ function PerspectiveCard({
 
       <div className="space-y-4 mb-6">
         {perspective.argument.split("\n\n").map((paragraph, idx) => (
-          <p key={idx} className="text-amber-800 dark:text-amber-100 leading-relaxed">
+          <p key={idx} className="text-slate-300 leading-relaxed">
             {paragraph}
           </p>
         ))}
       </div>
 
       <div className="space-y-2">
-        <h4 className="text-sm font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wide">
+        <h4 className="text-sm font-medium text-slate-400 uppercase tracking-wide">
           Key Points
         </h4>
         <ul className="space-y-2">
           {perspective.keyPoints.map((point, idx) => (
             <li
               key={idx}
-              className="flex items-start gap-2 text-amber-800 dark:text-amber-100"
+              className="flex items-start gap-2 text-slate-300"
               data-testid={`text-keypoint-${type}-${idx}`}
             >
               <span className={`mt-1.5 w-1.5 h-1.5 rounded-full ${iconColor.replace("text-", "bg-")} flex-shrink-0`} />
@@ -259,7 +259,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 bg-gradient-to-br from-amber-50 via-yellow-50 to-amber-100 dark:from-amber-950 dark:via-stone-950 dark:to-amber-950">
+    <div className="gradient-bg min-h-screen py-8 px-4">
       <div className="max-w-6xl mx-auto">
         {/* Top Navigation */}
         <nav className="flex justify-end mb-4">
@@ -268,7 +268,7 @@ export default function Home() {
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-3">
               <Link href="/history">
-                <Button variant="ghost" size="sm" className="text-amber-800 dark:text-amber-200" data-testid="button-history">
+                <Button variant="ghost" size="sm" className="text-slate-300" data-testid="button-history">
                   <History className="h-4 w-4 mr-1" />
                   <span className="hidden sm:inline">History</span>
                 </Button>
@@ -279,18 +279,18 @@ export default function Home() {
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
-              <span className="text-amber-800 dark:text-amber-200 text-sm hidden sm:inline" data-testid="text-user-name">
+              <span className="text-slate-300 text-sm hidden sm:inline" data-testid="text-user-name">
                 {user.firstName || user.email || "User"}
               </span>
               {effectiveIsPro && (
-                <span className="text-xs bg-emerald-600/20 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-full" data-testid="badge-pro">
+                <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full" data-testid="badge-pro">
                   Pro
                 </span>
               )}
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-amber-800 dark:text-amber-200"
+                className="text-slate-300"
                 onClick={() => window.location.href = "/api/logout"}
                 data-testid="button-logout"
               >
@@ -302,7 +302,7 @@ export default function Home() {
             <Button
               variant="outline"
               size="sm"
-              className="border-amber-600/30 text-amber-800 dark:border-amber-400/30 dark:text-amber-200"
+              className="border-white/20 text-white"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
             >
@@ -315,15 +315,15 @@ export default function Home() {
         {/* Header */}
         <header className="text-center mb-12">
           <div className="flex items-center justify-center gap-3 mb-4">
-            <MessageSquare className="w-10 h-10 text-emerald-600 dark:text-emerald-400" />
-            <h1 className="text-4xl md:text-5xl font-bold text-amber-900 dark:text-amber-100" data-testid="text-app-title">
+            <MessageSquare className="w-10 h-10 text-primary" />
+            <h1 className="text-4xl md:text-5xl font-bold text-white" data-testid="text-app-title">
               Echo Chamber
             </h1>
           </div>
-          <p className="text-xl md:text-2xl text-amber-700 dark:text-amber-300 mb-2" data-testid="text-tagline">
+          <p className="text-xl md:text-2xl text-slate-300 mb-2" data-testid="text-tagline">
             Break the echo. See every angle.
           </p>
-          <p className="text-amber-600 dark:text-amber-400 mb-4" data-testid="text-subtitle">
+          <p className="text-slate-400 mb-4" data-testid="text-subtitle">
             AI-powered bull, bear, and neutral perspectives on any stock
           </p>
           <div className="flex justify-center">
@@ -332,12 +332,12 @@ export default function Home() {
         </header>
 
         {/* Input Section */}
-        <div className="bg-white/80 dark:bg-stone-900/80 backdrop-blur-sm rounded-xl p-6 md:p-8 mb-8 max-w-2xl mx-auto border border-amber-200/50 dark:border-amber-700/30 shadow-lg">
+        <div className="glass rounded-md p-6 md:p-8 mb-8 max-w-2xl mx-auto">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label
                 htmlFor="symbol"
-                className="block text-sm font-medium text-amber-800 dark:text-amber-200 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2"
               >
                 Stock Symbol
               </label>
@@ -347,7 +347,7 @@ export default function Home() {
                 value={symbol}
                 onChange={(e) => setSymbol(e.target.value.toUpperCase())}
                 placeholder="AAPL, TSLA, NVDA..."
-                className="bg-amber-50/50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 placeholder:text-amber-500 dark:placeholder:text-amber-500 uppercase focus:ring-amber-400"
+                className="bg-white/5 border-white/20 text-white placeholder:text-slate-500 uppercase"
                 disabled={debateMutation.isPending}
                 data-testid="input-symbol"
               />
@@ -356,7 +356,7 @@ export default function Home() {
             <div>
               <label
                 htmlFor="context"
-                className="block text-sm font-medium text-amber-800 dark:text-amber-200 mb-2"
+                className="block text-sm font-medium text-slate-300 mb-2"
               >
                 Context (Optional)
               </label>
@@ -366,7 +366,7 @@ export default function Home() {
                 onChange={(e) => setContext(e.target.value)}
                 placeholder="E.g., 'Considering buying for long-term hold'..."
                 rows={3}
-                className="bg-amber-50/50 dark:bg-amber-950/50 border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-100 placeholder:text-amber-500 dark:placeholder:text-amber-500 resize-none focus:ring-amber-400"
+                className="bg-white/5 border-white/20 text-white placeholder:text-slate-500 resize-none"
                 disabled={debateMutation.isPending}
                 data-testid="input-context"
               />
@@ -375,7 +375,7 @@ export default function Home() {
             <Button
               type="submit"
               disabled={debateMutation.isPending || !symbol.trim() || !effectiveCanGenerate}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+              className="w-full"
               data-testid="button-generate"
             >
               {debateMutation.isPending ? (
@@ -397,9 +397,9 @@ export default function Home() {
         {debate && (
           <div className="space-y-6">
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-              <h2 className="text-2xl font-semibold text-amber-900 dark:text-amber-100">
+              <h2 className="text-2xl font-semibold text-white">
                 Analysis for{" "}
-                <span className="text-emerald-600 dark:text-emerald-400" data-testid="text-analyzed-symbol">
+                <span className="text-primary" data-testid="text-analyzed-symbol">
                   {debate.symbol}
                 </span>
               </h2>
@@ -407,7 +407,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   onClick={handleTwitterShare}
-                  className="border-amber-600/30 text-amber-800 dark:border-amber-400/30 dark:text-amber-200"
+                  className="border-white/20 text-white"
                   data-testid="button-share-twitter"
                 >
                   <SiX className="w-4 h-4 mr-2" />
@@ -416,7 +416,7 @@ export default function Home() {
                 <Button
                   variant="outline"
                   onClick={handleCopyLink}
-                  className="border-amber-600/30 text-amber-800 dark:border-amber-400/30 dark:text-amber-200"
+                  className="border-white/20 text-white"
                   data-testid="button-copy-link"
                 >
                   {copied ? (
@@ -456,10 +456,10 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="mt-16 text-center space-y-3">
-          <p className="text-amber-600 dark:text-amber-400 text-sm" data-testid="text-pricing">
+          <p className="text-slate-400 text-sm" data-testid="text-pricing">
             Free: 3 debates/month | Pro ($9/mo): Unlimited debates
           </p>
-          <p className="text-amber-500 dark:text-amber-500 text-xs" data-testid="text-disclaimer">
+          <p className="text-slate-500 text-xs" data-testid="text-disclaimer">
             Not financial advice. AI-generated perspectives for educational purposes only.
           </p>
         </footer>
