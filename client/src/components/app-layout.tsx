@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MessageSquare, LogIn, LogOut, User, History, Sparkles, ChevronDown } from "lucide-react";
+import { MessageSquare, LogIn, LogOut, History, Sparkles, ChevronDown, Crown } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -19,89 +19,108 @@ export function AppLayout({ children }: AppLayoutProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
 
-  const isActive = (path: string) => location === path || location.startsWith(path + "?");
+  const isActive = (path: string) => location.split('?')[0] === path;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-6">
+      <header className="sticky top-0 z-50 h-[72px] border-b border-border/50 bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80 shadow-sm">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between gap-4">
+          {/* Logo & Nav */}
+          <div className="flex items-center gap-8">
             <Link href="/">
-              <div className="flex items-center gap-2 cursor-pointer" data-testid="link-logo">
-                <MessageSquare className="w-6 h-6 text-[#0052FF]" />
-                <span className="font-semibold text-foreground hidden sm:inline">Echo Chamber</span>
+              <div className="flex items-center gap-2.5 cursor-pointer hover:opacity-80 transition-opacity" data-testid="link-logo">
+                <div className="w-9 h-9 rounded-xl bg-[#0052FF] flex items-center justify-center">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <span className="font-bold text-lg text-foreground hidden sm:inline">Echo Chamber</span>
               </div>
             </Link>
 
             {isAuthenticated && (
               <nav className="flex items-center gap-1">
-                <Link href="/app">
+                <Link href="/analyze">
                   <Button
-                    variant={isActive("/app") && !location.includes("tab=history") ? "secondary" : "ghost"}
+                    variant={isActive("/analyze") ? "secondary" : "ghost"}
                     size="sm"
-                    className="gap-2"
+                    className="h-9 gap-2 font-medium"
                     data-testid="nav-analyze"
                   >
                     <Sparkles className="w-4 h-4" />
-                    <span className="hidden sm:inline">Analyze</span>
+                    <span>Analyze</span>
                   </Button>
                 </Link>
-                <Link href="/app?tab=history">
+                <Link href="/history">
                   <Button
-                    variant={location.includes("tab=history") ? "secondary" : "ghost"}
+                    variant={isActive("/history") ? "secondary" : "ghost"}
                     size="sm"
-                    className="gap-2"
+                    className="h-9 gap-2 font-medium"
                     data-testid="nav-history"
                   >
                     <History className="w-4 h-4" />
-                    <span className="hidden sm:inline">History</span>
+                    <span>History</span>
                   </Button>
                 </Link>
               </nav>
             )}
           </div>
 
+          {/* User Menu */}
           <div className="flex items-center gap-3">
             {isLoading ? (
-              <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
+              <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
             ) : isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="gap-2 px-2" data-testid="button-user-menu">
-                    <Avatar className="w-7 h-7">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-9 gap-2.5 px-2 hover:bg-muted/80" 
+                    data-testid="button-user-menu"
+                  >
+                    <Avatar className="w-8 h-8 border border-border">
                       <AvatarImage src={user.profileImageUrl || undefined} />
-                      <AvatarFallback className="text-xs bg-[#0052FF]/10 text-[#0052FF]">
+                      <AvatarFallback className="text-sm bg-[#0052FF]/10 text-[#0052FF] font-medium">
                         {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="hidden sm:inline text-sm max-w-[100px] truncate">
+                    <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
                       {user.firstName || user.email?.split("@")[0]}
                     </span>
                     {user.isPremium && (
-                      <span className="text-xs bg-[#0052FF]/10 text-[#0052FF] px-1.5 py-0.5 rounded font-medium">
+                      <span className="text-xs bg-gradient-to-r from-[#0052FF] to-[#00D395] text-white px-2 py-0.5 rounded-full font-semibold">
                         PRO
                       </span>
                     )}
                     <ChevronDown className="w-4 h-4 text-muted-foreground" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                    {user.email}
+                <DropdownMenuContent align="end" className="w-56">
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium text-foreground">
+                      {user.firstName || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
                   </div>
                   <DropdownMenuSeparator />
                   {!user.isPremium && (
                     <>
-                      <DropdownMenuItem className="text-[#0052FF] cursor-pointer" data-testid="menu-upgrade">
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Upgrade to Pro
+                      <DropdownMenuItem 
+                        className="cursor-pointer py-2.5"
+                        onClick={() => window.location.href = "/checkout/success"}
+                        data-testid="menu-upgrade"
+                      >
+                        <Crown className="w-4 h-4 mr-2 text-[#0052FF]" />
+                        <span className="font-medium text-[#0052FF]">Upgrade to Pro</span>
+                        <span className="ml-auto text-xs text-muted-foreground">$9/mo</span>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                     </>
                   )}
                   <DropdownMenuItem
                     onClick={() => window.location.href = "/api/logout"}
-                    className="text-destructive cursor-pointer"
+                    className="cursor-pointer text-muted-foreground hover:text-foreground"
                     data-testid="menu-logout"
                   >
                     <LogOut className="w-4 h-4 mr-2" />
@@ -112,12 +131,12 @@ export function AppLayout({ children }: AppLayoutProps) {
             ) : (
               <Button
                 size="sm"
-                className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white gap-2"
+                className="h-9 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white gap-2 font-medium shadow-md"
                 onClick={() => window.location.href = "/api/login"}
                 data-testid="button-login"
               >
                 <LogIn className="w-4 h-4" />
-                <span className="hidden sm:inline">Log in</span>
+                <span>Log in</span>
               </Button>
             )}
           </div>

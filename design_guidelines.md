@@ -1,181 +1,223 @@
-# Echo Chamber - Coinbase Design System
+# Echo Chamber - AI Trading Coach Design Guidelines
 
 ## Design Philosophy
-Following Coinbase's design principles: clean, functional, Swiss-inspired design that balances crypto innovation with financial trust. The design emphasizes clarity, simplicity, and modern sophistication.
+A premium financial analysis tool combining Coinbase's trust and clarity with Linear's modern sophistication. The design balances professional credibility with approachable usability through refined visual hierarchy, subtle depth, and strategic use of color.
 
-## Core Design Principles
-- **Single Focus**: One killer feature executed flawlessly - no distractions
-- **Clarity First**: Clean typography, generous whitespace, clear hierarchy
-- **Trust Through Design**: Blue primary color evokes reliability and security
-- **Flat & Modern**: Minimal shadows, rely on borders and background colors
+**Design Approach**: Design System (Material Design + Apple HIG principles)
+- Depth through elevation and subtle shadows (not flat)
+- Clear information hierarchy
+- Purposeful color as meaning
+- Premium touches without decoration
 
-## Color Palette
+## Color System
 
-### Primary Colors
-- **Blue Ribbon (Primary)**: `#0052FF` - Key actions, trust, security
-- **White**: `#FFFFFF` - Clarity, light backgrounds
-- **Woodsmoke (Dark)**: `#0A0B0D` - Text, dark mode backgrounds
+### Core Palette
+**Primary Blue (Neutral)**: `#0052FF` - Trust, stability, neutral analysis
+**Success Green (Bull)**: `#00D395` - Bullish, gains, positive
+**Error Red (Bear)**: `#FF5F57` - Bearish, losses, negative
+**Warning Amber**: `#FFB800` - Caution, alerts
 
-### Semantic Colors
-- **Success/Bull**: `#00D395` - Positive trends, gains
-- **Error/Bear**: `#FF5F57` - Negative trends, losses, errors
-- **Neutral**: `#0052FF` - Balanced analysis (uses primary blue)
-- **Warning**: `#FFB800` - Caution states
+### Background Layers (Light Mode)
+**Base**: `#F8F9FA` - Main background (not pure white for reduced eye strain)
+**Elevated**: `#FFFFFF` - Cards, input areas
+**Interactive**: `#F0F2F5` - Hover states
 
-### Background Hierarchy (Light Mode)
-- **Primary Background**: `#FFFFFF`
-- **Secondary Background**: `#F8F9FA`
-- **Card Background**: `#FFFFFF`
-
-### Background Hierarchy (Dark Mode)
-- **Primary Background**: `#0A0B0D`
-- **Secondary Background**: `#141519`
-- **Card Background**: `#1E2025`
+### Background Layers (Dark Mode)
+**Base**: `#0A0B0D` - Main background
+**Elevated**: `#141519` - Primary cards
+**Raised**: `#1E2025` - Secondary cards, nested elements
+**Interactive**: `#252830` - Hover states
 
 ### Text Hierarchy
-- **Primary Text**: `#0A0B0D` (light) / `#FFFFFF` (dark)
-- **Secondary Text**: `#5B616E` (light) / `#8A919E` (dark)
-- **Muted Text**: `#8A919E` (light) / `#5B616E` (dark)
+**Primary**: `#0A0B0D` (light) / `#FFFFFF` (dark)
+**Secondary**: `#5B616E` (light) / `#8A919E` (dark)
+**Tertiary**: `#8A919E` (light) / `#5B616E` (dark)
 
-### Borders
-- **Default**: `#E8EAED` (light) / `#2C2F36` (dark)
-- **Subtle**: `#F0F2F5` (light) / `#1E2025` (dark)
+### Borders & Dividers
+**Strong**: `#E0E3E7` (light) / `#2C2F36` (dark)
+**Subtle**: `#F0F2F5` (light) / `#1E2025` (dark)
 
 ## Typography
 
-### Font Family
-- **Primary**: Inter, -apple-system, BlinkMacSystemFont, sans-serif
-- **Mono**: SF Mono, Menlo, monospace (for stock symbols, financial data)
+**Font Stack**: Inter, system-ui, sans-serif
+**Monospace**: SF Mono, Consolas, monospace (ticker symbols, prices)
 
-### Font Sizes
-- **Display/Hero**: 48px / 3rem (font-weight: 600)
-- **Heading 1**: 32px / 2rem (font-weight: 600)
-- **Heading 2**: 24px / 1.5rem (font-weight: 600)
-- **Heading 3**: 20px / 1.25rem (font-weight: 600)
-- **Body**: 16px / 1rem (font-weight: 400)
-- **Small**: 14px / 0.875rem (font-weight: 400)
-- **Micro**: 12px / 0.75rem (font-weight: 500)
+### Scale
+- **Display**: 56px, weight 700, line-height 1.1
+- **H1**: 36px, weight 700, line-height 1.2
+- **H2**: 28px, weight 600, line-height 1.3
+- **H3**: 20px, weight 600, line-height 1.4
+- **Body Large**: 18px, weight 400, line-height 1.6
+- **Body**: 16px, weight 400, line-height 1.5
+- **Small**: 14px, weight 500, line-height 1.4
+- **Caption**: 12px, weight 500, line-height 1.3, letter-spacing 0.3px
 
-### Line Heights
-- **Tight**: 1.2 (headings)
-- **Normal**: 1.5 (body)
-- **Relaxed**: 1.75 (paragraphs)
+## Spacing System
+Based on 8px grid (Tailwind units: 2, 3, 4, 6, 8, 10, 12, 16, 20, 24)
+- Component padding: p-6 to p-8
+- Section spacing: py-12 to py-20
+- Card gaps: gap-6 on desktop, gap-4 on mobile
 
-## Spacing Scale
-Following 4px base unit (Tailwind units):
-- `space-1`: 4px (1)
-- `space-2`: 8px (2)
-- `space-3`: 12px (3)
-- `space-4`: 16px (4)
-- `space-6`: 24px (6)
-- `space-8`: 32px (8)
-- `space-12`: 48px (12)
-- `space-16`: 64px (16)
+## Layout Structure
 
-## Layout System
+### Header
+- Height: 72px
+- Background: Elevated layer with subtle border-bottom
+- Logo left, navigation center (for future features), CTA right
+- Sticky on scroll with backdrop blur
 
-**Structure**:
-- Centered single-column layout with max-width container (max-w-6xl)
-- Clean header with branding
-- Input section as prominent card
-- Results grid: 3-column desktop (equal width), single-column mobile
-- Minimal footer
+### Main Container
+- Max-width: max-w-7xl
+- Padding: px-4 mobile, px-8 desktop
+- Sections clearly separated with py-12 spacing
+
+### Analysis Input Section
+- Prominent card with elevated shadow
+- Two-column on desktop: ticker input left, generate CTA right
+- Single column on mobile
+- Clear labeling and helper text
+
+### Results Grid
+- Three-column desktop (lg:grid-cols-3)
+- Single column mobile
+- Equal height cards with gap-6
+- Cards fade in with stagger animation
+
+### Footer
+- Minimal, two-row layout
+- Top row: disclaimer, educational message
+- Bottom row: legal links, pricing info
 
 ## Component Design
 
-### Buttons
-- **Primary**: Blue (#0052FF) background, white text
-- **Secondary**: Transparent with blue border, blue text
-- **Ghost**: No background, subtle hover state
-- **Border Radius**: 8px (rounded-lg)
-- **Height**: 40px default, 48px large
+### Cards (Perspective Analysis)
+**Structure**:
+- Border-radius: 16px (rounded-2xl)
+- Padding: p-8
+- Shadow: subtle elevation (shadow-lg)
+- Border: 1px with accent color at 20% opacity
 
-### Cards
-- **Background**: White (light) / `#1E2025` (dark)
-- **Border**: 1px solid border color
-- **Border Radius**: 12px (rounded-xl)
-- **Padding**: 24px (p-6)
-- **Shadow**: None (flat design)
+**Bull Card**:
+- Accent: 4px left border in Success Green
+- Icon: TrendingUp in Success Green
+- Background tint: `#00D39505` (ultra-subtle)
+- Hover: Lift shadow (shadow-xl)
+
+**Bear Card**:
+- Accent: 4px left border in Error Red
+- Icon: TrendingDown in Error Red
+- Background tint: `#FF5F5705`
+- Hover: Lift shadow
+
+**Neutral Card**:
+- Accent: 4px left border in Primary Blue
+- Icon: BarChart in Primary Blue
+- Background tint: `#0052FF05`
+- Hover: Lift shadow
+
+### Buttons
+**Primary CTA**:
+- Height: 56px large, 48px default
+- Border-radius: 12px
+- Background: Gradient from Primary Blue to slightly darker
+- Shadow: medium elevation
+- Icon: Sparkles before text
+- Hover: Lift with shadow-lg
+
+**Secondary**:
+- Transparent with 2px border
+- Same dimensions as primary
+- Hover: Subtle background fill
+
+**Ghost**:
+- No border, minimal background
+- Hover: Light background tint
 
 ### Input Fields
-- **Height**: 48px
-- **Border**: 1px solid border color
-- **Border Radius**: 8px
-- **Focus State**: 2px blue ring
+- Height: 56px
+- Border-radius: 12px
+- 2px border (strong border color)
+- Focus: Primary blue ring, lift shadow
+- Label above with small weight 600
+- Helper text below in secondary color
 
-### Badges/Pills
-- **Border Radius**: 6px
-- **Padding**: 4px 12px
-- **Font Size**: 12px, font-weight: 500
+### Badges
+- Border-radius: 8px
+- Padding: py-1.5 px-3
+- Font: caption size, weight 600
+- Slight shadow for depth
 
-## Perspective Cards (Echo Chamber Specific)
+## Visual Hierarchy Enhancements
 
-### Bull Case
-- **Accent Color**: `#00D395` (Coinbase green)
-- **Background**: `#00D39508` (very light tint)
-- **Border**: `#00D39540` (40% opacity)
-- **Icon**: TrendingUp
+### Depth & Elevation
+Use shadow system (not flat):
+- **sm**: Subtle cards
+- **md**: Interactive elements
+- **lg**: Elevated cards, modals
+- **xl**: Active/hover states
 
-### Bear Case
-- **Accent Color**: `#FF5F57` (Coinbase red)
-- **Background**: `#FF5F5708` (very light tint)
-- **Border**: `#FF5F5740` (40% opacity)
-- **Icon**: TrendingDown
+### Section Separation
+- Background alternation: base → elevated → base
+- Generous vertical spacing (py-16 between major sections)
+- Subtle dividers where needed
 
-### Neutral Analysis
-- **Accent Color**: `#0052FF` (Coinbase blue)
-- **Background**: `#0052FF08` (very light tint)
-- **Border**: `#0052FF40` (40% opacity)
-- **Icon**: Minus
+### Emphasis Techniques
+- Color contrast for CTAs (saturated blue vs muted backgrounds)
+- Size variation (display text vs body)
+- Weight contrast (700 headings vs 400 body)
+- Spacing isolation (generous margins around key elements)
 
-## Interactive Elements
-- Buttons with smooth hover states (slightly darker)
-- Cards with subtle border highlight on hover
-- No excessive scale transforms (keep it professional)
-
-## Animations & Transitions
-- **Duration**: 150-200ms for micro-interactions
-- **Easing**: ease-out for most transitions
-- **Approach**: Subtle, purposeful animations only
-- Cards fade in with slight upward movement
+## Dark Mode Strategy
+- Automatic based on system preference
+- Invert elevation (darker = lower, lighter = higher)
+- Reduce color saturation by 10-15%
+- Maintain contrast ratios (4.5:1 minimum)
+- Borders more prominent in dark mode
 
 ## Responsive Behavior
-
-**Mobile** (base):
-- Single column stack
+**Mobile** (base to md):
+- Stack all columns
+- Reduce padding to p-4
+- Smaller typography scale (0.875× multiplier)
 - Full-width cards
-- Smaller padding (p-4)
 
-**Desktop** (md breakpoint):
-- 3-column grid for perspective cards
-- max-w-6xl container
-- Larger padding (p-6)
+**Tablet** (md to lg):
+- Two-column grids where appropriate
+- Medium padding p-6
+
+**Desktop** (lg+):
+- Three-column grids
+- Full spacing scale
+- Hover states enabled
 
 ## Iconography
-Use lucide-react icons:
-- MessageSquare for branding
-- TrendingUp, TrendingDown, Minus for perspectives
-- Sparkles for generate action
-- Loader2 for loading state
-- Link2 for sharing functionality
+Lucide React icons with 24px default size:
+- MessageSquare (branding)
+- TrendingUp (bull)
+- TrendingDown (bear)
+- BarChart (neutral)
+- Sparkles (generate)
+- ArrowRight (CTAs)
+- Info (tooltips)
 
-## Accessibility
-- Maintain WCAG 2.1 AA contrast ratios
-- Never use color alone to communicate information
-- Support keyboard navigation
-- Include proper ARIA labels
-
-## Special Considerations
-
-**Trust & Credibility**:
-- Clean, professional Coinbase aesthetic builds confidence
-- Clear disclaimer in footer
-- Balanced presentation of all perspectives
-
-**Educational Focus**:
-- Footer messaging emphasizes learning over financial advice
-- Pricing clarity upfront (free tier with paid upgrade)
-- No misleading promises
+## Animation Principles
+- Duration: 200ms micro, 300ms standard
+- Easing: cubic-bezier(0.4, 0.0, 0.2, 1)
+- Cards: Fade + translateY(8px)
+- Buttons: Scale 0.98 on press
+- Loading: Subtle pulse on skeleton screens
 
 ## Images
-No hero images. This is a utility-focused tool where functionality and immediate usability take precedence over visual storytelling.
+**No hero image**. This is a utility-first tool where immediate functionality takes priority. The input section serves as the focal point with clear CTAs.
+
+## Accessibility
+- WCAG 2.1 AA contrast (minimum 4.5:1)
+- Keyboard navigation with visible focus rings
+- Screen reader labels for all interactive elements
+- Color not sole indicator (icons + text reinforce meaning)
+
+## Special Considerations
+- Perspective cards use both color AND icons to differentiate
+- Pricing transparency in header or footer
+- Disclaimer prominently placed but not obstructive
+- Educational tone in microcopy
