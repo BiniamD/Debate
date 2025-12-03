@@ -46,7 +46,7 @@ export default function Landing() {
             <div className="h-10" />
           ) : isAuthenticated && user ? (
             <div className="flex items-center gap-3">
-              <Link href="/history">
+              <Link href="/app?tab=history">
                 <Button variant="ghost" size="sm" data-testid="button-history">
                   <History className="h-4 w-4 mr-1" />
                   <span className="hidden sm:inline">History</span>
@@ -91,7 +91,7 @@ export default function Landing() {
             AI-powered stock analysis that gives you bull, bear, and neutral perspectives on any investment. Make informed decisions by seeing the full picture.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/analyze">
+            <Link href="/app">
               <Button
                 size="lg"
                 className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
@@ -159,7 +159,7 @@ export default function Landing() {
                 <li>All three perspectives</li>
                 <li>Shareable links</li>
               </ul>
-              <Link href="/analyze">
+              <Link href="/app">
                 <Button variant="outline" className="w-full" data-testid="button-start-free">
                   Start Free
                 </Button>
@@ -179,7 +179,7 @@ export default function Landing() {
                 <li>Shareable links</li>
                 <li>Debate history</li>
               </ul>
-              <Link href="/analyze">
+              <Link href="/app">
                 <Button className="w-full bg-[#0052FF] hover:bg-[#0052FF]/90 text-white" data-testid="button-start-pro">
                   Get Started
                 </Button>
