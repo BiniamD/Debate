@@ -130,12 +130,14 @@ export async function registerRoutes(
         return res.status(404).json({ error: "Debate not found" });
       }
       
+      // Return the new format with symbols array and result as record
       res.json({
         id: debate.id,
         symbol: debate.symbol,
+        symbols: debate.symbols || [debate.symbol],
         context: debate.context,
         createdAt: debate.createdAt,
-        ...debate.result,
+        result: debate.result,
       });
     } catch (error) {
       console.error("Error fetching debate:", error);

@@ -32,6 +32,90 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
+function PerspectiveCards({ data, symbol }: { data: DebateResponse; symbol: string }) {
+  return (
+    <div className="grid gap-6 md:grid-cols-3">
+      {/* Bull Card */}
+      <Card className="p-6 border-l-4 border-l-[#00D395] bg-[#00D395]/[0.02] shadow-md hover:shadow-lg transition-shadow" data-testid={`card-bull-${symbol}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-[#00D395]/10">
+            <TrendingUp className="w-5 h-5 text-[#00D395]" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">{data.bull.title}</h3>
+        </div>
+        <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
+          {data.bull.argument.split('\n\n').map((para, i) => (
+            <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
+          ))}
+        </div>
+        <div className="space-y-2 pt-4 border-t border-border/50">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
+          <ul className="space-y-2">
+            {data.bull.keyPoints.map((point, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                <span className="text-[#00D395] mt-0.5">+</span>
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+
+      {/* Bear Card */}
+      <Card className="p-6 border-l-4 border-l-[#FF5F57] bg-[#FF5F57]/[0.02] shadow-md hover:shadow-lg transition-shadow" data-testid={`card-bear-${symbol}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-[#FF5F57]/10">
+            <TrendingDown className="w-5 h-5 text-[#FF5F57]" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">{data.bear.title}</h3>
+        </div>
+        <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
+          {data.bear.argument.split('\n\n').map((para, i) => (
+            <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
+          ))}
+        </div>
+        <div className="space-y-2 pt-4 border-t border-border/50">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
+          <ul className="space-y-2">
+            {data.bear.keyPoints.map((point, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                <span className="text-[#FF5F57] mt-0.5">-</span>
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+
+      {/* Neutral Card */}
+      <Card className="p-6 border-l-4 border-l-[#0052FF] bg-[#0052FF]/[0.02] shadow-md hover:shadow-lg transition-shadow" data-testid={`card-neutral-${symbol}`}>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-[#0052FF]/10">
+            <BarChart3 className="w-5 h-5 text-[#0052FF]" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground">{data.neutral.title}</h3>
+        </div>
+        <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
+          {data.neutral.argument.split('\n\n').map((para, i) => (
+            <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
+          ))}
+        </div>
+        <div className="space-y-2 pt-4 border-t border-border/50">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
+          <ul className="space-y-2">
+            {data.neutral.keyPoints.map((point, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-foreground">
+                <span className="text-[#0052FF] mt-0.5">=</span>
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
 export default function Analyze() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
@@ -169,7 +253,7 @@ export default function Analyze() {
                   <Button
                     type="submit"
                     size="lg"
-                    disabled={analyzeMutation.isPending || !symbol.trim()}
+                    disabled={analyzeMutation.isPending || !symbolInput.trim()}
                     className="h-14 px-8 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold shadow-md"
                     data-testid="button-submit-analysis"
                   >
@@ -246,10 +330,7 @@ export default function Analyze() {
             <>
               {/* Share Actions */}
               {debateId && (
-                <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
-                  <Badge variant="outline" className="px-4 py-2 text-base font-mono">
-                    ${symbol}
-                  </Badge>
+                <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
                   <Button
                     variant="outline"
                     size="sm"
@@ -275,86 +356,32 @@ export default function Analyze() {
                 </div>
               )}
 
-              {/* Perspective Cards */}
-              <div className="grid gap-6 md:grid-cols-3">
-                {/* Bull Card */}
-                <Card className="p-6 border-l-4 border-l-[#00D395] bg-[#00D395]/[0.02] shadow-md hover:shadow-lg transition-shadow animate-fadeIn" data-testid="card-bull">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-[#00D395]/10">
-                      <TrendingUp className="w-5 h-5 text-[#00D395]" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground">{result.bull.title}</h3>
-                  </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-                    {result.bull.argument.split('\n\n').map((para, i) => (
-                      <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
+              {/* Symbol Tabs (only show if multiple symbols) */}
+              {analyzedSymbols.length > 1 ? (
+                <Tabs value={activeSymbol} onValueChange={setActiveSymbol} className="w-full">
+                  <TabsList className="w-full justify-start mb-6 h-auto flex-wrap gap-1 bg-muted/50 p-1">
+                    {analyzedSymbols.map((sym) => (
+                      <TabsTrigger 
+                        key={sym} 
+                        value={sym}
+                        className="px-4 py-2 font-mono font-semibold data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                        data-testid={`tab-symbol-${sym}`}
+                      >
+                        ${sym}
+                      </TabsTrigger>
                     ))}
-                  </div>
-                  <div className="space-y-2 pt-4 border-t border-border/50">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
-                    <ul className="space-y-2">
-                      {result.bull.keyPoints.map((point, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                          <span className="text-[#00D395] mt-0.5">+</span>
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Card>
-
-                {/* Bear Card */}
-                <Card className="p-6 border-l-4 border-l-[#FF5F57] bg-[#FF5F57]/[0.02] shadow-md hover:shadow-lg transition-shadow animate-fadeIn-delay-1" data-testid="card-bear">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-[#FF5F57]/10">
-                      <TrendingDown className="w-5 h-5 text-[#FF5F57]" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground">{result.bear.title}</h3>
-                  </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-                    {result.bear.argument.split('\n\n').map((para, i) => (
-                      <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
-                    ))}
-                  </div>
-                  <div className="space-y-2 pt-4 border-t border-border/50">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
-                    <ul className="space-y-2">
-                      {result.bear.keyPoints.map((point, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                          <span className="text-[#FF5F57] mt-0.5">-</span>
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Card>
-
-                {/* Neutral Card */}
-                <Card className="p-6 border-l-4 border-l-[#0052FF] bg-[#0052FF]/[0.02] shadow-md hover:shadow-lg transition-shadow animate-fadeIn-delay-2" data-testid="card-neutral">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="p-2 rounded-lg bg-[#0052FF]/10">
-                      <BarChart3 className="w-5 h-5 text-[#0052FF]" />
-                    </div>
-                    <h3 className="text-lg font-semibold text-foreground">{result.neutral.title}</h3>
-                  </div>
-                  <div className="prose prose-sm dark:prose-invert max-w-none mb-4">
-                    {result.neutral.argument.split('\n\n').map((para, i) => (
-                      <p key={i} className="text-muted-foreground leading-relaxed mb-3">{para}</p>
-                    ))}
-                  </div>
-                  <div className="space-y-2 pt-4 border-t border-border/50">
-                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Key Points</p>
-                    <ul className="space-y-2">
-                      {result.neutral.keyPoints.map((point, i) => (
-                        <li key={i} className="flex items-start gap-2 text-sm text-foreground">
-                          <span className="text-[#0052FF] mt-0.5">=</span>
-                          {point}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </Card>
-              </div>
+                  </TabsList>
+                  
+                  {analyzedSymbols.map((sym) => (
+                    <TabsContent key={sym} value={sym} className="mt-0">
+                      {result[sym] && <PerspectiveCards data={result[sym]} symbol={sym} />}
+                    </TabsContent>
+                  ))}
+                </Tabs>
+              ) : (
+                /* Single symbol - no tabs needed */
+                currentResult && <PerspectiveCards data={currentResult} symbol={analyzedSymbols[0]} />
+              )}
             </>
           )}
 

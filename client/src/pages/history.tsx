@@ -130,36 +130,48 @@ export default function History() {
                     data-testid={`card-debate-${debate.id}`}
                   >
                     <div className="flex items-start justify-between mb-4">
-                      <Badge 
-                        variant="outline" 
-                        className="text-lg font-mono font-semibold px-3 py-1"
-                      >
-                        ${debate.symbol}
-                      </Badge>
+                      <div className="flex flex-wrap gap-1">
+                        {(debate.symbols || [debate.symbol]).map((sym) => (
+                          <Badge 
+                            key={sym}
+                            variant="outline" 
+                            className="text-sm font-mono font-semibold px-2 py-0.5"
+                          >
+                            ${sym}
+                          </Badge>
+                        ))}
+                      </div>
                       <ArrowRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
 
                     {/* Mini Perspective Summary */}
-                    <div className="space-y-2 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <TrendingUp className="w-4 h-4 text-[#00D395]" />
-                        <span className="text-muted-foreground truncate">
-                          {debate.result?.bull?.keyPoints?.[0] || "Bull case analysis"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <TrendingDown className="w-4 h-4 text-[#FF5F57]" />
-                        <span className="text-muted-foreground truncate">
-                          {debate.result?.bear?.keyPoints?.[0] || "Bear case analysis"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <BarChart3 className="w-4 h-4 text-[#0052FF]" />
-                        <span className="text-muted-foreground truncate">
-                          {debate.result?.neutral?.keyPoints?.[0] || "Neutral analysis"}
-                        </span>
-                      </div>
-                    </div>
+                    {(() => {
+                      const symbols = debate.symbols || [debate.symbol];
+                      const firstSymbol = symbols[0];
+                      const firstResult = debate.result?.[firstSymbol];
+                      return (
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center gap-2 text-sm">
+                            <TrendingUp className="w-4 h-4 text-[#00D395]" />
+                            <span className="text-muted-foreground truncate">
+                              {firstResult?.bull?.keyPoints?.[0] || "Bull case analysis"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <TrendingDown className="w-4 h-4 text-[#FF5F57]" />
+                            <span className="text-muted-foreground truncate">
+                              {firstResult?.bear?.keyPoints?.[0] || "Bear case analysis"}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <BarChart3 className="w-4 h-4 text-[#0052FF]" />
+                            <span className="text-muted-foreground truncate">
+                              {firstResult?.neutral?.keyPoints?.[0] || "Neutral analysis"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Date */}
                     <div className="flex items-center gap-2 text-xs text-muted-foreground pt-4 border-t border-border/50">
