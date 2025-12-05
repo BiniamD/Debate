@@ -180,7 +180,7 @@ export async function registerRoutes(
   });
 
   // Checkout success - verify subscription and mark user as Pro
-  app.get("/api/checkout/verify", async (req, res) => {
+  app.get("/api/checkout/verify", isAuthenticated, async (req: any, res) => {
     try {
       const { session_id } = req.query;
       if (!session_id || typeof session_id !== 'string') {
@@ -191,6 +191,19 @@ export async function registerRoutes(
       const session = await stripe.checkout.sessions.retrieve(session_id);
 
       if (session.payment_status === 'paid') {
+        // Get the authenticated user and mark them as premium
+        const replitSub = req.user.claims.sub;
+        const user = await storage.getUserByReplitSub(replitSub);
+        
+        if (user) {
+          // Update user to premium status and store Stripe customer ID
+          await storage.updateUser(user.id, {
+            isPremium: true,
+            stripeCustomerId: session.customer as string,
+          });
+          console.log(`User ${user.id} upgraded to Pro`);
+        }
+        
         res.json({ 
           success: true, 
           subscription: session.subscription,
