@@ -1,21 +1,19 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import Anthropic from "@anthropic-ai/sdk";
-import { debateRequestSchema, debateResponseSchema, type DebateResponse } from "@shared/schema";
+import OpenAI from "openai";
+import { debateRequestSchema, debateResponseSchema, multiDebateResponseSchema, type DebateResponse, type MultiDebateResponse } from "@shared/schema";
 import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { setupAuth, isAuthenticated, optionalAuth } from "./replitAuth";
 
-// Using the javascript_anthropic blueprint
-// The newest Anthropic model is "claude-sonnet-4-20250514"
-const DEFAULT_MODEL_STR = "claude-sonnet-4-20250514";
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+// Using the javascript_xai blueprint - Grok AI
+const xai = new OpenAI({
+  baseURL: "https://api.x.ai/v1",
+  apiKey: process.env.XAI_API_KEY,
 });
 
-const SYSTEM_PROMPT = `You are a financial analysis AI that provides balanced, multi-perspective analysis.
-For any stock symbol, provide THREE perspectives:
+const SINGLE_SYMBOL_PROMPT = `You are a financial analysis AI that provides balanced, multi-perspective analysis.
+For the given stock symbol, provide THREE perspectives:
 1. BULL CASE: optimistic view, growth catalysts, competitive advantages
 2. BEAR CASE: risks, downsides, competitive threats  
 3. NEUTRAL CASE: data-driven, objective metrics, balanced assessment
@@ -40,6 +38,40 @@ Format your response as JSON with this exact structure:
 }
 
 Important: Return ONLY the JSON object, no additional text or markdown formatting.`;
+
+const MULTI_SYMBOL_PROMPT = `You are a financial analysis AI that provides balanced, multi-perspective analysis.
+For EACH stock symbol provided, provide THREE perspectives:
+1. BULL CASE: optimistic view, growth catalysts, competitive advantages
+2. BEAR CASE: risks, downsides, competitive threats  
+3. NEUTRAL CASE: data-driven, objective metrics, balanced assessment
+
+Format your response as JSON with this exact structure (one entry per symbol):
+{
+  "SYMBOL1": {
+    "bull": {
+      "title": "Bull Case",
+      "argument": "2-3 paragraph optimistic analysis...",
+      "keyPoints": ["Point 1", "Point 2", "Point 3"]
+    },
+    "bear": {
+      "title": "Bear Case",
+      "argument": "2-3 paragraph pessimistic analysis...",
+      "keyPoints": ["Point 1", "Point 2", "Point 3"]
+    },
+    "neutral": {
+      "title": "Neutral Analysis",
+      "argument": "2-3 paragraph balanced analysis...",
+      "keyPoints": ["Point 1", "Point 2", "Point 3"]
+    }
+  },
+  "SYMBOL2": {
+    "bull": { ... },
+    "bear": { ... },
+    "neutral": { ... }
+  }
+}
+
+Important: Return ONLY the JSON object, no additional text or markdown formatting. Use the exact symbols as keys.`;
 
 export async function registerRoutes(
   httpServer: Server,
@@ -196,7 +228,9 @@ export async function registerRoutes(
         });
       }
 
-      const { symbol, context } = parseResult.data;
+      const { symbols, context } = parseResult.data;
+      const normalizedSymbols = symbols.map(s => s.toUpperCase().trim());
+      const symbolCount = normalizedSymbols.length;
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
       // Get user ID if authenticated
@@ -206,54 +240,67 @@ export async function registerRoutes(
         if (user) {
           userId = user.id;
           
-          // Check rate limit for non-Pro users
+          // Check rate limit for non-Pro users (each symbol counts as one debate)
           if (!user.isPremium) {
             const debatesThisMonth = user.lastDebateMonth === currentMonth 
               ? user.debatesThisMonth 
               : 0;
             
-            if (debatesThisMonth >= FREE_TIER_LIMIT) {
+            if (debatesThisMonth + symbolCount > FREE_TIER_LIMIT) {
               return res.status(429).json({
                 error: "Rate limit exceeded",
-                message: "You've reached your free tier limit of 3 debates this month. Upgrade to Pro for unlimited debates.",
+                message: `You've reached your free tier limit. You have ${Math.max(0, FREE_TIER_LIMIT - debatesThisMonth)} analyses remaining this month. Upgrade to Pro for unlimited analyses.`,
                 code: "RATE_LIMIT_EXCEEDED",
               });
             }
           }
           
-          // Update user's monthly debate count
+          // Update user's monthly debate count (charge per symbol)
           if (user.lastDebateMonth !== currentMonth) {
             // New month, reset count
             await storage.updateUser(user.id, { 
-              debatesThisMonth: 1, 
+              debatesThisMonth: symbolCount, 
               lastDebateMonth: currentMonth 
             });
           } else {
-            // Same month, increment count
+            // Same month, increment count by number of symbols
             await storage.updateUser(user.id, { 
-              debatesThisMonth: user.debatesThisMonth + 1 
+              debatesThisMonth: user.debatesThisMonth + symbolCount 
             });
           }
         }
       }
 
-      // Build user message
-      let userMessage = `Analyze the stock: ${symbol.toUpperCase()}`;
+      // Build user message based on single or multiple symbols
+      const isMultiSymbol = symbolCount > 1;
+      let userMessage: string;
+      let systemPrompt: string;
+      
+      if (isMultiSymbol) {
+        userMessage = `Analyze these stocks: ${normalizedSymbols.join(', ')}`;
+        systemPrompt = MULTI_SYMBOL_PROMPT;
+      } else {
+        userMessage = `Analyze the stock: ${normalizedSymbols[0]}`;
+        systemPrompt = SINGLE_SYMBOL_PROMPT;
+      }
+      
       if (context) {
         userMessage += `\n\nAdditional context from the investor: ${context}`;
       }
 
-      // Call Anthropic API
-      const message = await anthropic.messages.create({
-        model: DEFAULT_MODEL_STR,
-        max_tokens: 2048,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
+      // Call Grok API (xAI) using OpenAI-compatible SDK
+      const response = await xai.chat.completions.create({
+        model: "grok-2-1212",
+        max_tokens: isMultiSymbol ? 4096 : 2048,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userMessage }
+        ],
       });
 
       // Extract text content from response
-      const textContent = message.content.find((block) => block.type === "text");
-      if (!textContent || textContent.type !== "text") {
+      const textContent = response.choices[0]?.message?.content;
+      if (!textContent) {
         throw new Error("No text content in response");
       }
 
@@ -261,43 +308,67 @@ export async function registerRoutes(
       let rawParsed: unknown;
       try {
         // Try to extract JSON from the response (in case there's extra text)
-        const jsonMatch = textContent.text.match(/\{[\s\S]*\}/);
+        const jsonMatch = textContent.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
           throw new Error("No JSON found in response");
         }
         rawParsed = JSON.parse(jsonMatch[0]);
       } catch (parseError) {
-        console.error("Failed to parse Claude response:", textContent.text);
+        console.error("Failed to parse Grok response:", textContent);
         throw new Error("Failed to parse AI response as JSON");
       }
 
-      // Validate the response structure using Zod schema
-      const validationResult = debateResponseSchema.safeParse(rawParsed);
-      if (!validationResult.success) {
-        console.error("Debate response validation failed:", validationResult.error.errors);
-        console.error("Raw parsed response:", JSON.stringify(rawParsed, null, 2));
-        return res.status(502).json({
-          error: "Invalid AI response structure",
-          message: "The AI generated an invalid response format. Please try again.",
-        });
+      // Validate and normalize the response structure
+      let result: MultiDebateResponse;
+      
+      if (isMultiSymbol) {
+        // Validate multi-symbol response
+        const validationResult = multiDebateResponseSchema.safeParse(rawParsed);
+        if (!validationResult.success) {
+          console.error("Multi-debate response validation failed:", validationResult.error.errors);
+          console.error("Raw parsed response:", JSON.stringify(rawParsed, null, 2));
+          return res.status(502).json({
+            error: "Invalid AI response structure",
+            message: "The AI generated an invalid response format. Please try again.",
+          });
+        }
+        result = validationResult.data;
+      } else {
+        // Single symbol - validate and wrap in object
+        const validationResult = debateResponseSchema.safeParse(rawParsed);
+        if (!validationResult.success) {
+          console.error("Debate response validation failed:", validationResult.error.errors);
+          console.error("Raw parsed response:", JSON.stringify(rawParsed, null, 2));
+          return res.status(502).json({
+            error: "Invalid AI response structure",
+            message: "The AI generated an invalid response format. Please try again.",
+          });
+        }
+        result = { [normalizedSymbols[0]]: validationResult.data };
       }
 
       // Save debate to database (linked to user if authenticated)
-      const debate = await storage.createDebate(userId, symbol, context, validationResult.data);
+      const debate = await storage.createDebate(
+        userId, 
+        normalizedSymbols.join(','), 
+        context, 
+        result,
+        normalizedSymbols
+      );
 
       // Return result with debate ID for sharing
       res.json({
         id: debate.id,
-        symbol: debate.symbol,
-        ...validationResult.data,
+        symbols: normalizedSymbols,
+        result,
       });
     } catch (error) {
       console.error("Debate generation error:", error);
       
-      if (error instanceof Anthropic.APIError) {
+      if (error instanceof OpenAI.APIError) {
         return res.status(error.status || 500).json({
           error: "AI service error",
-          message: error.message,
+          message: (error as Error).message,
         });
       }
 

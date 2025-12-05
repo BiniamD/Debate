@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { AppLayout } from "@/components/app-layout";
-import type { User, DebateResponse } from "@shared/schema";
+import type { User, DebateResponse, MultiDebateResponse } from "@shared/schema";
 import { 
   Sparkles, 
   TrendingUp, 
@@ -34,9 +35,11 @@ import {
 export default function Analyze() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [symbol, setSymbol] = useState("");
+  const [symbolInput, setSymbolInput] = useState("");
   const [context, setContext] = useState("");
-  const [result, setResult] = useState<DebateResponse | null>(null);
+  const [result, setResult] = useState<MultiDebateResponse | null>(null);
+  const [analyzedSymbols, setAnalyzedSymbols] = useState<string[]>([]);
+  const [activeSymbol, setActiveSymbol] = useState<string>("");
   const [showPaywall, setShowPaywall] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [debateId, setDebateId] = useState<string | null>(null);
@@ -46,12 +49,14 @@ export default function Analyze() {
   });
 
   const analyzeMutation = useMutation({
-    mutationFn: async (data: { symbol: string; context?: string }) => {
+    mutationFn: async (data: { symbols: string[]; context?: string }) => {
       const response = await apiRequest("POST", "/api/debate", data);
       return response.json();
     },
     onSuccess: (data) => {
       setResult(data.result);
+      setAnalyzedSymbols(data.symbols);
+      setActiveSymbol(data.symbols[0]);
       setDebateId(data.id);
       queryClient.invalidateQueries({ queryKey: ["/api/user/debates"] });
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
@@ -69,25 +74,38 @@ export default function Analyze() {
     },
   });
 
+  const parseSymbols = (input: string): string[] => {
+    return input
+      .toUpperCase()
+      .split(/[,\s]+/)
+      .map(s => s.trim())
+      .filter(s => s.length > 0 && s.length <= 10)
+      .slice(0, 5);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!symbol.trim()) {
+    const symbols = parseSymbols(symbolInput);
+    if (symbols.length === 0) {
       toast({
         title: "Enter a Symbol",
-        description: "Please enter a stock ticker symbol to analyze.",
+        description: "Please enter one or more stock ticker symbols to analyze (comma-separated).",
         variant: "destructive",
       });
       return;
     }
     setResult(null);
     setDebateId(null);
+    setAnalyzedSymbols([]);
+    setActiveSymbol("");
     analyzeMutation.mutate({ 
-      symbol: symbol.toUpperCase().trim(), 
+      symbols, 
       context: context.trim() || undefined 
     });
   };
 
   const shareUrl = debateId ? `${window.location.origin}/debate/${debateId}` : "";
+  const currentResult = result && activeSymbol ? result[activeSymbol] : null;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -100,7 +118,10 @@ export default function Analyze() {
   };
 
   const handleShareTwitter = () => {
-    const text = `Check out this AI-powered stock analysis for $${symbol} on Echo Chamber - bull, bear, and neutral perspectives in one place!`;
+    const symbolText = analyzedSymbols.length > 1 
+      ? analyzedSymbols.map(s => `$${s}`).join(', ')
+      : `$${analyzedSymbols[0]}`;
+    const text = `Check out this AI-powered stock analysis for ${symbolText} on Echo Chamber - bull, bear, and neutral perspectives in one place!`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(url, "_blank");
   };
@@ -129,17 +150,20 @@ export default function Analyze() {
               <div className="grid gap-6 md:grid-cols-[1fr,auto]">
                 <div className="space-y-2">
                   <label htmlFor="symbol" className="text-sm font-semibold text-foreground">
-                    Stock Symbol
+                    Stock Symbols
                   </label>
                   <Input
                     id="symbol"
                     type="text"
-                    placeholder="e.g., AAPL, TSLA, NVDA"
-                    value={symbol}
-                    onChange={(e) => setSymbol(e.target.value.toUpperCase())}
+                    placeholder="e.g., AAPL, TSLA, NVDA (comma-separated, max 5)"
+                    value={symbolInput}
+                    onChange={(e) => setSymbolInput(e.target.value.toUpperCase())}
                     className="h-14 text-lg font-mono uppercase tracking-wider"
                     data-testid="input-stock-symbol"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Enter up to 5 symbols separated by commas for comparative analysis
+                  </p>
                 </div>
                 <div className="flex items-end">
                   <Button

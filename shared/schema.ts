@@ -17,12 +17,16 @@ export const debateResponseSchema = z.object({
 });
 
 export const debateRequestSchema = z.object({
-  symbol: z.string().min(1).max(10),
+  symbols: z.array(z.string().min(1).max(10)).min(1).max(5),
   context: z.string().optional(),
 });
 
+// Schema for multi-symbol debate response
+export const multiDebateResponseSchema = z.record(z.string(), debateResponseSchema);
+
 export type Perspective = z.infer<typeof perspectiveSchema>;
 export type DebateResponse = z.infer<typeof debateResponseSchema>;
+export type MultiDebateResponse = z.infer<typeof multiDebateResponseSchema>;
 export type DebateRequest = z.infer<typeof debateRequestSchema>;
 
 // Session storage table for Replit Auth
@@ -55,9 +59,10 @@ export const users = pgTable("users", {
 export const debates = pgTable("debates", {
   id: varchar("id", { length: 21 }).primaryKey(), // nanoid
   userId: integer("user_id").references(() => users.id),
-  symbol: text("symbol").notNull(),
+  symbol: text("symbol").notNull(), // comma-separated symbols
+  symbols: text("symbols").array(), // array of symbols analyzed
   context: text("context"),
-  result: json("result").$type<DebateResponse>().notNull(),
+  result: json("result").$type<MultiDebateResponse>().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

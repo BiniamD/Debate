@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, debates, type User, type UpsertUser, type Debate, type DebateResponse } from "@shared/schema";
+import { users, debates, type User, type UpsertUser, type Debate, type MultiDebateResponse } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
@@ -13,7 +13,7 @@ export interface IStorage {
   // Debate operations
   getDebate(id: string): Promise<Debate | undefined>;
   getDebatesByUser(userId: number, limit?: number): Promise<Debate[]>;
-  createDebate(userId: number | null, symbol: string, context: string | undefined, result: DebateResponse): Promise<Debate>;
+  createDebate(userId: number | null, symbol: string, context: string | undefined, result: MultiDebateResponse, symbols?: string[]): Promise<Debate>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -67,12 +67,13 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(debates).where(eq(debates.userId, userId)).orderBy(desc(debates.createdAt)).limit(limit);
   }
 
-  async createDebate(userId: number | null, symbol: string, context: string | undefined, result: DebateResponse): Promise<Debate> {
+  async createDebate(userId: number | null, symbol: string, context: string | undefined, result: MultiDebateResponse, symbols?: string[]): Promise<Debate> {
     const id = nanoid();
     const [debate] = await db.insert(debates).values({
       id,
       userId,
       symbol,
+      symbols: symbols || [symbol],
       context,
       result,
     }).returning();
