@@ -25,7 +25,12 @@ async function initStripe() {
 
   try {
     console.log('Initializing Stripe schema...');
-    await runMigrations({ databaseUrl } as any);
+    // Set timeout to 10 seconds for migrations
+    const migrationsPromise = runMigrations({ databaseUrl } as any);
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Stripe schema initialization timeout')), 10000)
+    );
+    await Promise.race([migrationsPromise, timeoutPromise]);
     console.log('Stripe schema ready');
 
     const stripeSync = await getStripeSync();
@@ -43,7 +48,11 @@ async function initStripe() {
       .then(() => console.log('Stripe data synced'))
       .catch((err: Error) => console.error('Stripe sync error:', err));
   } catch (error) {
-    console.error('Stripe initialization error:', error);
+    if (error instanceof Error && error.message.includes('timeout')) {
+      console.warn('Stripe schema initialization timed out - continuing without Stripe sync');
+    } else {
+      console.error('Stripe initialization error:', error);
+    }
   }
 }
 
