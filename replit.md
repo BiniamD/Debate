@@ -2,7 +2,7 @@
 
 ## Overview
 
-Echo Chamber is a full-stack web application that provides multi-perspective AI analysis for stock investments. The application generates three distinct viewpoints (bull case, bear case, and neutral analysis) for any given stock symbol using Claude AI. The core philosophy is focused execution: one killer feature done exceptionally well rather than spreading across many features.
+Echo Chamber is a full-stack web application that provides multi-perspective AI analysis for stock investments. The application generates three distinct viewpoints (bull case, bear case, and neutral analysis) for stock symbols using xAI's Grok model. Supports analyzing up to 5 stocks simultaneously with comma-separated input. The core philosophy is focused execution: one killer feature done exceptionally well rather than spreading across many features.
 
 The name "Echo Chamber" is ironic - while the term typically refers to a space where only one viewpoint is reinforced, this platform deliberately breaks the echo by presenting multiple opposing perspectives.
 
@@ -10,9 +10,10 @@ The application follows the Coinbase Design System aesthetic with clean, Swiss-i
 
 ## Key Features
 
-- **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock powered by Claude Sonnet 4
+- **Multi-perspective AI Analysis**: Bull, bear, and neutral viewpoints for any stock powered by xAI Grok 4
+- **Multi-Symbol Analysis**: Analyze up to 5 stocks simultaneously with comma-separated input and tabbed results UI
 - **Shareable Debates**: Public URLs for sharing debates on Twitter/social media (/debate/:id routes)
-- **Rate Limiting**: Free tier with 3 debates/month tracked server-side for authenticated users
+- **Rate Limiting**: Free tier with 3 analyses/month tracked server-side (counting per symbol analyzed)
 - **Monetization**: Free tier vs Pro ($9/month via Stripe) with paywall modal when limit reached
 - **Share Functionality**: Twitter share with pre-filled tweets and copy link to clipboard
 - **Replit Auth**: User authentication via Replit's built-in OAuth
@@ -85,16 +86,24 @@ Preferred communication style: Simple, everyday language.
 
 ### AI Integration
 
-**Anthropic Claude API**
-- Claude Sonnet 4 (model: claude-sonnet-4-20250514) for analysis generation
+**xAI Grok API**
+- Grok 4-1-fast model (grok-4-1-fast) for analysis generation
+- Uses OpenAI SDK with base URL pointing to xAI API for compatibility
 - System prompt engineering for consistent three-perspective output format
 - Structured JSON response format enforced through prompting
 - Each perspective includes: title, multi-paragraph argument, and key points array
+- Multi-symbol support: Processes up to 5 symbols in a single request with batched prompt
 
 **Analysis Structure**
 - Bull Case: Optimistic view, growth catalysts, competitive advantages
 - Bear Case: Risks, downsides, competitive threats
 - Neutral Analysis: Data-driven, objective metrics, balanced assessment
+
+**Multi-Symbol Processing**
+- Comma-separated input parsed and normalized (uppercase, deduplicated)
+- Sequential processing for API rate limit management
+- Results stored as keyed object (symbol -> bull/bear/neutral)
+- Tabbed UI for navigating between symbol analyses
 
 ### Database Layer
 
@@ -141,9 +150,10 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### AI Services
-- **Anthropic Claude API** - Primary AI service for generating multi-perspective stock analysis
-  - API Key: ANTHROPIC_API_KEY environment variable
-  - Model: claude-sonnet-4-20250514
+- **xAI Grok API** - Primary AI service for generating multi-perspective stock analysis
+  - API Key: XAI_API_KEY environment variable
+  - Model: grok-4-1-fast
+  - Accessed via OpenAI SDK with custom base URL (https://api.x.ai/v1)
 
 ### Database Services
 - **Neon Database** - Serverless PostgreSQL database
