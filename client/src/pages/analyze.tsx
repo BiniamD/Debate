@@ -298,7 +298,21 @@ export default function Analyze() {
                     variant="ghost"
                     size="sm"
                     className="text-[#0052FF] hover:text-[#0052FF]/80"
-                    onClick={() => navigate("/checkout/success")}
+                    onClick={async () => {
+                      try {
+                        const response = await fetch("/api/checkout", { method: "POST" });
+                        const data = await response.json();
+                        if (data.url) {
+                          window.location.href = data.url;
+                        }
+                      } catch (error) {
+                        toast({
+                          title: "Error",
+                          description: "Failed to start checkout",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
                     data-testid="button-upgrade-inline"
                   >
                     Upgrade to Pro
@@ -433,14 +447,14 @@ export default function Analyze() {
               </ul>
             </div>
             <Button
+              type="button"
               className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold"
               onClick={async () => {
                 try {
                   const response = await fetch("/api/checkout", { method: "POST" });
                   const data = await response.json();
                   if (data.url) {
-                    // Open Stripe checkout in same window
-                    window.location = data.url;
+                    window.location.href = data.url;
                   } else if (data.error) {
                     toast({
                       title: "Error",
