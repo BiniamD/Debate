@@ -434,9 +434,26 @@ export default function Analyze() {
             </div>
             <Button
               className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold"
-              onClick={() => {
-                setShowPaywall(false);
-                navigate("/checkout/success");
+              onClick={async () => {
+                try {
+                  const response = await fetch("/api/checkout", { method: "POST" });
+                  const data = await response.json();
+                  if (data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    toast({
+                      title: "Error",
+                      description: "Failed to create checkout session",
+                      variant: "destructive",
+                    });
+                  }
+                } catch (error) {
+                  toast({
+                    title: "Error",
+                    description: "Failed to start checkout",
+                    variant: "destructive",
+                  });
+                }
               }}
               data-testid="button-upgrade-modal"
             >
