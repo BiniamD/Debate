@@ -439,11 +439,12 @@ export default function Analyze() {
                   const response = await fetch("/api/checkout", { method: "POST" });
                   const data = await response.json();
                   if (data.url) {
-                    window.location.href = data.url;
-                  } else {
+                    // Open Stripe checkout in same window
+                    window.location = data.url;
+                  } else if (data.error) {
                     toast({
                       title: "Error",
-                      description: "Failed to create checkout session",
+                      description: data.error,
                       variant: "destructive",
                     });
                   }
