@@ -19,7 +19,9 @@ export default function CheckoutSuccess() {
       return;
     }
 
-    fetch(`/api/checkout/verify?session_id=${sessionId}`)
+    fetch(`/api/checkout/verify?session_id=${sessionId}`, {
+      credentials: 'include',
+    })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {

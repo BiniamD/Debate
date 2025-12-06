@@ -184,25 +184,32 @@ export async function registerRoutes(
     try {
       const { session_id } = req.query;
       if (!session_id || typeof session_id !== 'string') {
+        console.error("Verify error: Missing session_id");
         return res.status(400).json({ error: "Missing session_id" });
       }
 
+      console.log(`Verifying checkout session: ${session_id}`);
+      
       const stripe = await getUncachableStripeClient();
       const session = await stripe.checkout.sessions.retrieve(session_id);
+      console.log(`Session payment status: ${session.payment_status}`);
 
       if (session.payment_status === 'paid') {
         // Get the authenticated user and mark them as premium
         const replitSub = req.user.claims.sub;
         const user = await storage.getUserByReplitSub(replitSub);
         
-        if (user) {
-          // Update user to premium status and store Stripe customer ID
-          await storage.updateUser(user.id, {
-            isPremium: true,
-            stripeCustomerId: session.customer as string,
-          });
-          console.log(`User ${user.id} upgraded to Pro`);
+        if (!user) {
+          console.error(`Verify error: User not found for replitSub ${replitSub}`);
+          return res.status(404).json({ error: "User not found" });
         }
+        
+        // Update user to premium status and store Stripe customer ID
+        await storage.updateUser(user.id, {
+          isPremium: true,
+          stripeCustomerId: session.customer as string,
+        });
+        console.log(`User ${user.id} upgraded to Pro - Customer ID: ${session.customer}`);
         
         res.json({ 
           success: true, 
@@ -210,11 +217,12 @@ export async function registerRoutes(
           customer: session.customer,
         });
       } else {
+        console.warn(`Session ${session_id} payment status: ${session.payment_status}`);
         res.json({ success: false, status: session.payment_status });
       }
     } catch (error) {
       console.error("Verification error:", error);
-      res.status(500).json({ error: "Failed to verify subscription" });
+      res.status(500).json({ error: "Failed to verify subscription", details: String(error) });
     }
   });
 
