@@ -16,7 +16,7 @@ The application follows the Coinbase Design System aesthetic with clean, Swiss-i
 - **Rate Limiting**: Free tier with 3 analyses/month tracked server-side (counting per symbol analyzed)
 - **Monetization**: Free tier vs Pro ($9/month via Stripe) with paywall modal when limit reached
 - **Share Functionality**: Twitter share with pre-filled tweets and copy link to clipboard
-- **Replit Auth**: User authentication via Replit's built-in OAuth
+- **Clerk Auth**: User authentication via Clerk (replaced Replit Auth on Dec 2024)
 
 ## Application Routes
 
@@ -160,6 +160,17 @@ Preferred communication style: Simple, everyday language.
   - Connection: DATABASE_URL environment variable
   - Accessed via @neondatabase/serverless driver
   - Managed through Drizzle ORM
+
+### Authentication
+- **Clerk** - Authentication and user management
+  - Frontend: @clerk/clerk-react with ClerkProvider in main.tsx
+  - Backend: @clerk/express middleware in server/clerkAuth.ts
+  - Environment variables:
+    - CLERK_PUBLISHABLE_KEY_ECO (backend)
+    - CLERK_SECRET_KEY_ECO (backend)
+    - VITE_CLERK_PUBLISHABLE_KEY_ECO (frontend)
+  - Uses SignInButton/UserButton components for auth UI
+  - getAuth() from @clerk/express for backend session verification
 
 ### UI Component Libraries
 - **Radix UI** - Headless UI primitives (accordion, alert-dialog, avatar, checkbox, dialog, dropdown-menu, hover-card, label, menubar, navigation-menu, popover, progress, radio-group, scroll-area, select, separator, slider, switch, tabs, toast, toggle, tooltip)
