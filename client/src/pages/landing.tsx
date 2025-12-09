@@ -89,17 +89,31 @@ export default function Landing() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/analyze">
-              <Button
-                size="lg"
-                className="h-14 px-8 text-base bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold shadow-lg shadow-[#0052FF]/20"
-                data-testid="button-get-started"
-              >
-                <Sparkles className="w-5 h-5 mr-2" />
-                Start Analyzing
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            {isAuthenticated ? (
+              <Link href="/analyze">
+                <Button
+                  size="lg"
+                  className="h-14 px-8 text-base bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold shadow-lg shadow-[#0052FF]/20"
+                  data-testid="button-get-started"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start Analyzing
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+            ) : (
+              <SignInButton mode="modal" forceRedirectUrl="/analyze">
+                <Button
+                  size="lg"
+                  className="h-14 px-8 text-base bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold shadow-lg shadow-[#0052FF]/20"
+                  data-testid="button-get-started"
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Start Analyzing
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </SignInButton>
+            )}
             <Button
               variant="outline"
               size="lg"
@@ -212,11 +226,19 @@ export default function Landing() {
                   <span>Shareable links</span>
                 </li>
               </ul>
-              <Link href="/analyze">
-                <Button variant="outline" className="w-full h-12 font-medium" data-testid="button-start-free">
-                  Get Started Free
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/analyze">
+                  <Button variant="outline" className="w-full h-12 font-medium" data-testid="button-start-free">
+                    Get Started Free
+                  </Button>
+                </Link>
+              ) : (
+                <SignInButton mode="modal" forceRedirectUrl="/analyze">
+                  <Button variant="outline" className="w-full h-12 font-medium" data-testid="button-start-free">
+                    Get Started Free
+                  </Button>
+                </SignInButton>
+              )}
             </Card>
             
             {/* Pro Tier */}
@@ -250,11 +272,19 @@ export default function Landing() {
                   <span>Full analysis history</span>
                 </li>
               </ul>
-              <Link href="/analyze">
-                <Button className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-medium" data-testid="button-start-pro">
-                  Upgrade to Pro
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link href="/analyze">
+                  <Button className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-medium" data-testid="button-start-pro">
+                    Upgrade to Pro
+                  </Button>
+                </Link>
+              ) : (
+                <SignInButton mode="modal" forceRedirectUrl="/analyze">
+                  <Button className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-medium" data-testid="button-start-pro">
+                    Upgrade to Pro
+                  </Button>
+                </SignInButton>
+              )}
             </Card>
           </div>
         </div>
