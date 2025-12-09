@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { SignInButton, UserButton } from "@clerk/clerk-react";
 import { Link } from "wouter";
 import {
   MessageSquare,
@@ -12,12 +13,10 @@ import {
   Shield,
   Zap,
   LogIn,
-  LogOut,
   History,
   Sparkles,
   Check,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function Landing() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -54,26 +53,20 @@ export default function Landing() {
                   <span>Analyze</span>
                 </Button>
               </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => window.location.href = "/api/logout"}
-                data-testid="button-logout"
-              >
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <UserButton afterSignOutUrl="/" />
             </div>
           ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              className="gap-2"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-login"
-            >
-              <LogIn className="h-4 w-4" />
-              Log in
-            </Button>
+            <SignInButton mode="modal">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                data-testid="button-login"
+              >
+                <LogIn className="h-4 w-4" />
+                Log in
+              </Button>
+            </SignInButton>
           )}
         </nav>
 

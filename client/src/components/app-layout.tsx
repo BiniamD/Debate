@@ -1,15 +1,8 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { SignInButton, SignOutButton, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MessageSquare, LogIn, LogOut, History, Sparkles, ChevronDown, Crown } from "lucide-react";
+import { MessageSquare, LogIn, History, Sparkles, Crown } from "lucide-react";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -69,75 +62,54 @@ export function AppLayout({ children }: AppLayoutProps) {
             {isLoading ? (
               <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
             ) : isAuthenticated && user ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-9 gap-2.5 px-2 hover:bg-muted/80" 
-                    data-testid="button-user-menu"
+              <div className="flex items-center gap-3">
+                {user.isPremium && (
+                  <span className="text-xs bg-gradient-to-r from-[#0052FF] to-[#00D395] text-white px-2 py-0.5 rounded-full font-semibold">
+                    PRO
+                  </span>
+                )}
+                {!user.isPremium && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 gap-2 text-[#0052FF] hover:text-[#0052FF]/80"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch("/api/checkout", { method: "POST" });
+                        const data = await response.json();
+                        if (data.url) {
+                          window.location.href = data.url;
+                        }
+                      } catch (error) {
+                        console.error("Checkout error:", error);
+                      }
+                    }}
+                    data-testid="button-upgrade"
                   >
-                    <Avatar className="w-8 h-8 border border-border">
-                      <AvatarImage src={user.profileImageUrl || undefined} />
-                      <AvatarFallback className="text-sm bg-[#0052FF]/10 text-[#0052FF] font-medium">
-                        {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="hidden md:inline text-sm font-medium max-w-[120px] truncate">
-                      {user.firstName || user.email?.split("@")[0]}
-                    </span>
-                    {user.isPremium && (
-                      <span className="text-xs bg-gradient-to-r from-[#0052FF] to-[#00D395] text-white px-2 py-0.5 rounded-full font-semibold">
-                        PRO
-                      </span>
-                    )}
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                    <Crown className="w-4 h-4" />
+                    <span className="hidden sm:inline">Upgrade</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-3 py-2">
-                    <p className="text-sm font-medium text-foreground">
-                      {user.firstName || "User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {user.email}
-                    </p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  {!user.isPremium && (
-                    <>
-                      <DropdownMenuItem 
-                        className="cursor-pointer py-2.5"
-                        onClick={() => window.location.href = "/checkout/success"}
-                        data-testid="menu-upgrade"
-                      >
-                        <Crown className="w-4 h-4 mr-2 text-[#0052FF]" />
-                        <span className="font-medium text-[#0052FF]">Upgrade to Pro</span>
-                        <span className="ml-auto text-xs text-muted-foreground">$9/mo</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem
-                    onClick={() => window.location.href = "/api/logout"}
-                    className="cursor-pointer text-muted-foreground hover:text-foreground"
-                    data-testid="menu-logout"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Log out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                )}
+                <UserButton 
+                  afterSignOutUrl="/"
+                  appearance={{
+                    elements: {
+                      avatarBox: "w-9 h-9"
+                    }
+                  }}
+                />
+              </div>
             ) : (
-              <Button
-                size="sm"
-                className="h-9 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white gap-2 font-medium shadow-md"
-                onClick={() => window.location.href = "/api/login"}
-                data-testid="button-login"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>Log in</span>
-              </Button>
+              <SignInButton mode="modal">
+                <Button
+                  size="sm"
+                  className="h-9 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white gap-2 font-medium shadow-md"
+                  data-testid="button-login"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>Log in</span>
+                </Button>
+              </SignInButton>
             )}
           </div>
         </div>

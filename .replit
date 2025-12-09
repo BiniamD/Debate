@@ -76,3 +76,8 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_anthropic:1.0.0", "stripe:1.0.0", "javascript_log_in_with_replit:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+VITE_CLERK_PUBLISHABLE_KEY = "${CLERK_PUBLISHABLE_KEY}"
