@@ -9,7 +9,11 @@ export interface IStorage {
   getUserByReplitSub(replitSub: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUser(id: number, updates: Partial<User>): Promise<User | undefined>;
-  
+
+  // Pay-per-use credit operations
+  usePurchasedAnalysis(userId: number): Promise<boolean>;
+  addPurchasedAnalyses(userId: number, quantity: number): Promise<User | undefined>;
+
   // Debate operations
   getDebate(id: string): Promise<Debate | undefined>;
   getDebatesByUser(userId: number, limit?: number): Promise<Debate[]>;
@@ -55,6 +59,32 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: number, updates: Partial<User>): Promise<User | undefined> {
     const [updatedUser] = await db.update(users).set({ ...updates, updatedAt: new Date() }).where(eq(users.id, id)).returning();
     return updatedUser;
+  }
+
+  // Pay-per-use credit operations
+  async usePurchasedAnalysis(userId: number): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user || user.purchasedAnalyses <= 0) {
+      return false;
+    }
+
+    await this.updateUser(userId, {
+      purchasedAnalyses: user.purchasedAnalyses - 1
+    });
+    return true;
+  }
+
+  async addPurchasedAnalyses(userId: number, quantity: number): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      return undefined;
+    }
+
+    return this.updateUser(userId, {
+      purchasedAnalyses: user.purchasedAnalyses + quantity,
+      lifetimePurchases: user.lifetimePurchases + quantity,
+      lastPurchaseAt: new Date(),
+    });
   }
 
   // Debate operations

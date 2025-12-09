@@ -6,6 +6,8 @@ import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { setupClerkAuth, isAuthenticated, optionalAuth, getOrCreateUser } from "./clerkAuth";
 import { getAuth } from "@clerk/express";
+import { getCachedAnalysis, setCachedAnalysis } from "./cache";
+import { isTopStock } from "./topStocks";
 
 // Clerk Frontend API Proxy for custom domain support
 async function clerkProxyHandler(req: Request, res: Response) {
@@ -71,10 +73,16 @@ async function clerkProxyHandler(req: Request, res: Response) {
 }
 
 // Using the javascript_xai blueprint - Grok AI
-const xai = new OpenAI({
-  baseURL: "https://api.x.ai/v1",
-  apiKey: process.env.XAI_API_KEY,
-});
+const xai = process.env.XAI_API_KEY
+  ? new OpenAI({
+      baseURL: "https://api.x.ai/v1",
+      apiKey: process.env.XAI_API_KEY,
+    })
+  : null;
+
+if (!xai) {
+  console.warn("XAI_API_KEY not set - AI debate features will be unavailable");
+}
 
 const SINGLE_SYMBOL_PROMPT = `You are a financial analysis AI that provides balanced, multi-perspective analysis.
 For the given stock symbol, provide THREE perspectives:
@@ -251,6 +259,89 @@ export async function registerRoutes(
     }
   });
 
+  // Purchase single analysis (pay-per-use)
+  app.post("/api/purchase/analysis", optionalAuth, async (req: any, res) => {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const auth = getAuth(req);
+
+      // Get or create user
+      let userId: string | null = null;
+      if (auth.userId) {
+        userId = auth.userId;
+      }
+
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Stock Analysis Credit',
+              description: 'One AI-powered stock analysis (never expires)',
+            },
+            unit_amount: 199, // $1.99
+          },
+          quantity: 1,
+        }],
+        mode: 'payment', // One-time payment (not subscription)
+        metadata: {
+          userId: userId || 'anonymous',
+          quantity: '1',
+          type: 'analysis_credit',
+        },
+        success_url: `${protocol}://${host}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${protocol}://${host}/analyze`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Purchase error:", error);
+      res.status(500).json({ error: "Failed to create purchase session" });
+    }
+  });
+
+  // Purchase verification for pay-per-use
+  app.get("/api/purchase/verify", isAuthenticated, async (req: any, res) => {
+    try {
+      const { session_id } = req.query;
+      if (!session_id || typeof session_id !== 'string') {
+        return res.status(400).json({ error: "Missing session_id" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+
+      if (session.payment_status === 'paid' && session.metadata?.type === 'analysis_credit') {
+        const auth = getAuth(req);
+        const user = await storage.getUserByReplitSub(auth.userId!);
+
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        const quantity = parseInt(session.metadata.quantity || '1');
+        await storage.addPurchasedAnalyses(user.id, quantity);
+
+        console.log(`Added ${quantity} analysis credit(s) for user ${user.id}`);
+
+        res.json({
+          success: true,
+          credits: quantity,
+          total: user.purchasedAnalyses + quantity,
+        });
+      } else {
+        res.json({ success: false, status: session.payment_status });
+      }
+    } catch (error) {
+      console.error("Purchase verification error:", error);
+      res.status(500).json({ error: "Failed to verify purchase" });
+    }
+  });
+
   // Checkout success - verify subscription and mark user as Pro
   app.get("/api/checkout/verify", isAuthenticated, async (req: any, res) => {
     try {
@@ -328,6 +419,27 @@ export async function registerRoutes(
       const symbolCount = normalizedSymbols.length;
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
+      // CACHE CHECK: For single symbol without context, check cache first
+      // Cached results are "free" - don't count against rate limit
+      const isSingleSymbol = symbolCount === 1;
+      const hasNoContext = !context || context.trim() === '';
+
+      if (isSingleSymbol && hasNoContext) {
+        const cached = await getCachedAnalysis(normalizedSymbols[0]);
+        if (cached) {
+          console.log(`Cache HIT for ${normalizedSymbols[0]}`);
+          return res.json({
+            id: null, // Not stored in DB for cached results
+            symbols: cached.symbols,
+            result: cached.result,
+            cached: true,
+            cachedAt: cached.cachedAt,
+            expiresAt: cached.expiresAt,
+          });
+        }
+        console.log(`Cache MISS for ${normalizedSymbols[0]}`);
+      }
+
       // Get user ID if authenticated
       let userId: number | null = null;
       const auth = getAuth(req);
@@ -338,31 +450,61 @@ export async function registerRoutes(
           
           // Check rate limit for non-Pro users (each symbol counts as one debate)
           if (!user.isPremium) {
-            const debatesThisMonth = user.lastDebateMonth === currentMonth 
-              ? user.debatesThisMonth 
+            const debatesThisMonth = user.lastDebateMonth === currentMonth
+              ? user.debatesThisMonth
               : 0;
-            
+
             if (debatesThisMonth + symbolCount > FREE_TIER_LIMIT) {
-              return res.status(429).json({
-                error: "Rate limit exceeded",
-                message: `You've reached your free tier limit. You have ${Math.max(0, FREE_TIER_LIMIT - debatesThisMonth)} analyses remaining this month. Upgrade to Pro for unlimited analyses.`,
-                code: "RATE_LIMIT_EXCEEDED",
-              });
+              // Free tier exhausted - check for purchased credits
+              if (user.purchasedAnalyses > 0) {
+                // Use purchased credit
+                const creditUsed = await storage.usePurchasedAnalysis(user.id);
+                if (!creditUsed) {
+                  return res.status(500).json({
+                    error: "Failed to use credit",
+                    message: "An error occurred processing your credit. Please try again.",
+                  });
+                }
+                console.log(`User ${user.id} used 1 purchased credit (${user.purchasedAnalyses - 1} remaining)`);
+              } else {
+                // No credits - show paywall with both options
+                return res.status(429).json({
+                  error: "Rate limit exceeded",
+                  message: `You've used all ${FREE_TIER_LIMIT} free analyses this month.`,
+                  remaining: Math.max(0, FREE_TIER_LIMIT - debatesThisMonth),
+                  code: "RATE_LIMIT_EXCEEDED",
+                  options: {
+                    payPerUse: {
+                      price: 1.99,
+                      endpoint: "/api/purchase/analysis",
+                      label: "Buy 1 Analysis",
+                    },
+                    subscription: {
+                      price: 9.00,
+                      endpoint: "/api/checkout",
+                      label: "Go Pro - Unlimited",
+                    }
+                  }
+                });
+              }
             }
           }
           
           // Update user's monthly debate count (charge per symbol)
-          if (user.lastDebateMonth !== currentMonth) {
-            // New month, reset count
-            await storage.updateUser(user.id, { 
-              debatesThisMonth: symbolCount, 
-              lastDebateMonth: currentMonth 
-            });
-          } else {
-            // Same month, increment count by number of symbols
-            await storage.updateUser(user.id, { 
-              debatesThisMonth: user.debatesThisMonth + symbolCount 
-            });
+          // Only increment if not using purchased credits and not Pro
+          if (!user.isPremium && user.purchasedAnalyses === 0) {
+            if (user.lastDebateMonth !== currentMonth) {
+              // New month, reset count
+              await storage.updateUser(user.id, {
+                debatesThisMonth: symbolCount,
+                lastDebateMonth: currentMonth
+              });
+            } else {
+              // Same month, increment count by number of symbols
+              await storage.updateUser(user.id, {
+                debatesThisMonth: user.debatesThisMonth + symbolCount
+              });
+            }
           }
         }
       }
@@ -385,6 +527,13 @@ export async function registerRoutes(
       }
 
       // Call Grok API (xAI) using OpenAI-compatible SDK
+      if (!xai) {
+        return res.status(503).json({
+          error: "Service unavailable",
+          message: "AI service is not configured. Please set XAI_API_KEY environment variable.",
+        });
+      }
+
       const response = await xai.chat.completions.create({
         model: "grok-2-1212",
         max_tokens: isMultiSymbol ? 4096 : 2048,
@@ -443,11 +592,17 @@ export async function registerRoutes(
         result = { [normalizedSymbols[0]]: validationResult.data };
       }
 
+      // CACHE SET: Cache single-symbol results without context
+      if (isSingleSymbol && hasNoContext) {
+        await setCachedAnalysis(normalizedSymbols[0], result);
+        console.log(`Cached ${normalizedSymbols[0]} for 24 hours`);
+      }
+
       // Save debate to database (linked to user if authenticated)
       const debate = await storage.createDebate(
-        userId, 
-        normalizedSymbols.join(','), 
-        context, 
+        userId,
+        normalizedSymbols.join(','),
+        context,
         result,
         normalizedSymbols
       );
@@ -457,6 +612,7 @@ export async function registerRoutes(
         id: debate.id,
         symbols: normalizedSymbols,
         result,
+        cached: false,
       });
     } catch (error) {
       console.error("Debate generation error:", error);

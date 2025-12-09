@@ -8,6 +8,7 @@ import Analyze from "@/pages/analyze";
 import History from "@/pages/history";
 import DebatePage from "@/pages/debate";
 import CheckoutSuccess from "@/pages/checkout-success";
+import PurchaseSuccess from "@/pages/purchase-success";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/app">{() => <Redirect to="/analyze" />}</Route>
       <Route path="/debate/:id" component={DebatePage} />
       <Route path="/checkout/success" component={CheckoutSuccess} />
+      <Route path="/purchase/success" component={PurchaseSuccess} />
       <Route component={NotFound} />
     </Switch>
   );
