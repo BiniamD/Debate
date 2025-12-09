@@ -150,7 +150,9 @@ export async function registerRoutes(
     try {
       const stripe = await getUncachableStripeClient();
       const host = req.get('host');
-      const protocol = req.protocol;
+      // Use HTTPS in production (check X-Forwarded-Proto header or default to https for non-localhost)
+      const forwardedProto = req.get('x-forwarded-proto');
+      const protocol = forwardedProto || (host?.includes('localhost') ? 'http' : 'https');
       
       // Create a checkout session for the Pro plan ($9/month)
       const session = await stripe.checkout.sessions.create({
@@ -160,7 +162,7 @@ export async function registerRoutes(
             currency: 'usd',
             product_data: {
               name: 'Echo Chamber Pro',
-              description: 'Unlimited debates per month',
+              description: 'Unlimited stock analyses per month',
             },
             unit_amount: 900, // $9.00
             recurring: { interval: 'month' },
