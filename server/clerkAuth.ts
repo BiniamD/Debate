@@ -3,10 +3,19 @@ import type { Express, RequestHandler } from "express";
 import { storage } from "./storage";
 
 export function setupClerkAuth(app: Express) {
+  const secretKey = process.env.CLERK_SECRET_KEY_ECO;
+  const publishableKey = process.env.CLERK_PUBLISHABLE_KEY_ECO;
+
+  if (!secretKey || !publishableKey) {
+    console.warn("Clerk keys not set - authentication will be unavailable");
+    console.warn("Set CLERK_SECRET_KEY_ECO and CLERK_PUBLISHABLE_KEY_ECO to enable authentication");
+    return;
+  }
+
   // Add Clerk middleware to all routes with custom secret key
   app.use(clerkMiddleware({
-    secretKey: process.env.CLERK_SECRET_KEY_ECO,
-    publishableKey: process.env.CLERK_PUBLISHABLE_KEY_ECO,
+    secretKey,
+    publishableKey,
   }));
 }
 

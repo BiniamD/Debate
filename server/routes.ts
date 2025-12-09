@@ -71,10 +71,16 @@ async function clerkProxyHandler(req: Request, res: Response) {
 }
 
 // Using the javascript_xai blueprint - Grok AI
-const xai = new OpenAI({
-  baseURL: "https://api.x.ai/v1",
-  apiKey: process.env.XAI_API_KEY,
-});
+const xai = process.env.XAI_API_KEY
+  ? new OpenAI({
+      baseURL: "https://api.x.ai/v1",
+      apiKey: process.env.XAI_API_KEY,
+    })
+  : null;
+
+if (!xai) {
+  console.warn("XAI_API_KEY not set - AI debate features will be unavailable");
+}
 
 const SINGLE_SYMBOL_PROMPT = `You are a financial analysis AI that provides balanced, multi-perspective analysis.
 For the given stock symbol, provide THREE perspectives:
@@ -385,6 +391,13 @@ export async function registerRoutes(
       }
 
       // Call Grok API (xAI) using OpenAI-compatible SDK
+      if (!xai) {
+        return res.status(503).json({
+          error: "Service unavailable",
+          message: "AI service is not configured. Please set XAI_API_KEY environment variable.",
+        });
+      }
+
       const response = await xai.chat.completions.create({
         model: "grok-2-1212",
         max_tokens: isMultiSymbol ? 4096 : 2048,
