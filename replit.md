@@ -172,6 +172,17 @@ Preferred communication style: Simple, everyday language.
   - Uses SignInButton/UserButton components for auth UI
   - getAuth() from @clerk/express for backend session verification
 
+### Payment Processing
+- **Stripe** - Payment processing for Pro subscriptions ($9/month)
+  - Uses dual credential system in server/stripeClient.ts:
+    1. Tries Replit Stripe connector first (for development)
+    2. Falls back to environment variables (for production or when connector unavailable)
+  - Environment variables (required for production):
+    - STRIPE_PUBLISHABLE_KEY (pk_live_* for production)
+    - STRIPE_SECRET_KEY (sk_live_* for production)
+  - Uses stripe-replit-sync for webhook handling and data sync
+  - Checkout flow redirects to Stripe hosted checkout page
+
 ### UI Component Libraries
 - **Radix UI** - Headless UI primitives (accordion, alert-dialog, avatar, checkbox, dialog, dropdown-menu, hover-card, label, menubar, navigation-menu, popover, progress, radio-group, scroll-area, select, separator, slider, switch, tabs, toast, toggle, tooltip)
 - **Lucide React** - Icon library for UI elements
