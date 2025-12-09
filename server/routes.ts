@@ -4,7 +4,8 @@ import OpenAI from "openai";
 import { debateRequestSchema, debateResponseSchema, multiDebateResponseSchema, type DebateResponse, type MultiDebateResponse } from "@shared/schema";
 import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
-import { setupAuth, isAuthenticated, optionalAuth } from "./replitAuth";
+import { setupClerkAuth, isAuthenticated, optionalAuth, getOrCreateUser } from "./clerkAuth";
+import { getAuth } from "@clerk/express";
 
 // Using the javascript_xai blueprint - Grok AI
 const xai = new OpenAI({
@@ -78,8 +79,8 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  // Setup Replit Auth
-  await setupAuth(app);
+  // Setup Clerk Auth
+  setupClerkAuth(app);
 
   // Health check endpoint
   app.get("/api/health", (_req, res) => {
@@ -89,11 +90,13 @@ export async function registerRoutes(
   // Get authenticated user (returns null for anonymous users, not 401)
   app.get("/api/auth/user", optionalAuth, async (req: any, res) => {
     try {
-      if (!req.isAuthenticated() || !req.user?.claims?.sub) {
+      const auth = getAuth(req);
+      if (!auth.userId) {
         return res.json(null);
       }
-      const replitSub = req.user.claims.sub;
-      const user = await storage.getUserByReplitSub(replitSub);
+      
+      // Get or create user in our database
+      const user = await getOrCreateUser(auth.userId);
       if (!user) {
         return res.json(null);
       }
@@ -107,8 +110,8 @@ export async function registerRoutes(
   // Get user's debate history
   app.get("/api/user/debates", isAuthenticated, async (req: any, res) => {
     try {
-      const replitSub = req.user.claims.sub;
-      const user = await storage.getUserByReplitSub(replitSub);
+      const auth = getAuth(req);
+      const user = await storage.getUserByReplitSub(auth.userId!);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -198,11 +201,11 @@ export async function registerRoutes(
 
       if (session.payment_status === 'paid') {
         // Get the authenticated user and mark them as premium
-        const replitSub = req.user.claims.sub;
-        const user = await storage.getUserByReplitSub(replitSub);
+        const auth = getAuth(req);
+        const user = await storage.getUserByReplitSub(auth.userId!);
         
         if (!user) {
-          console.error(`Verify error: User not found for replitSub ${replitSub}`);
+          console.error(`Verify error: User not found for clerkId ${auth.userId}`);
           return res.status(404).json({ error: "User not found" });
         }
         
@@ -260,8 +263,9 @@ export async function registerRoutes(
 
       // Get user ID if authenticated
       let userId: number | null = null;
-      if (req.isAuthenticated() && req.user?.claims?.sub) {
-        const user = await storage.getUserByReplitSub(req.user.claims.sub);
+      const auth = getAuth(req);
+      if (auth.userId) {
+        const user = await storage.getUserByReplitSub(auth.userId);
         if (user) {
           userId = user.id;
           

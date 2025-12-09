@@ -80,3 +80,4 @@ integrations = ["javascript_anthropic:1.0.0", "stripe:1.0.0", "javascript_log_in
 [userenv]
 
 [userenv.shared]
+VITE_CLERK_PUBLISHABLE_KEY = "pk_test_Y29tcGxldGUtbmFyd2hhbC00Ny5jbGVyay5hY2NvdW50cy5kZXYk"
