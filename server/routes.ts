@@ -6,6 +6,8 @@ import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { setupClerkAuth, isAuthenticated, optionalAuth, getOrCreateUser } from "./clerkAuth";
 import { getAuth } from "@clerk/express";
+import { getCachedAnalysis, setCachedAnalysis } from "./cache";
+import { isTopStock } from "./topStocks";
 
 // Clerk Frontend API Proxy for custom domain support
 async function clerkProxyHandler(req: Request, res: Response) {
@@ -334,6 +336,27 @@ export async function registerRoutes(
       const symbolCount = normalizedSymbols.length;
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
 
+      // CACHE CHECK: For single symbol without context, check cache first
+      // Cached results are "free" - don't count against rate limit
+      const isSingleSymbol = symbolCount === 1;
+      const hasNoContext = !context || context.trim() === '';
+
+      if (isSingleSymbol && hasNoContext) {
+        const cached = await getCachedAnalysis(normalizedSymbols[0]);
+        if (cached) {
+          console.log(`Cache HIT for ${normalizedSymbols[0]}`);
+          return res.json({
+            id: null, // Not stored in DB for cached results
+            symbols: cached.symbols,
+            result: cached.result,
+            cached: true,
+            cachedAt: cached.cachedAt,
+            expiresAt: cached.expiresAt,
+          });
+        }
+        console.log(`Cache MISS for ${normalizedSymbols[0]}`);
+      }
+
       // Get user ID if authenticated
       let userId: number | null = null;
       const auth = getAuth(req);
@@ -456,11 +479,17 @@ export async function registerRoutes(
         result = { [normalizedSymbols[0]]: validationResult.data };
       }
 
+      // CACHE SET: Cache single-symbol results without context
+      if (isSingleSymbol && hasNoContext) {
+        await setCachedAnalysis(normalizedSymbols[0], result);
+        console.log(`Cached ${normalizedSymbols[0]} for 24 hours`);
+      }
+
       // Save debate to database (linked to user if authenticated)
       const debate = await storage.createDebate(
-        userId, 
-        normalizedSymbols.join(','), 
-        context, 
+        userId,
+        normalizedSymbols.join(','),
+        context,
         result,
         normalizedSymbols
       );
@@ -470,6 +499,7 @@ export async function registerRoutes(
         id: debate.id,
         symbols: normalizedSymbols,
         result,
+        cached: false,
       });
     } catch (error) {
       console.error("Debate generation error:", error);
