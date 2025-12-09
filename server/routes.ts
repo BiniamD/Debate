@@ -1,4 +1,4 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import OpenAI from "openai";
 import { debateRequestSchema, debateResponseSchema, multiDebateResponseSchema, type DebateResponse, type MultiDebateResponse } from "@shared/schema";
@@ -6,6 +6,69 @@ import { storage } from "./storage";
 import { getUncachableStripeClient, getStripePublishableKey } from "./stripeClient";
 import { setupClerkAuth, isAuthenticated, optionalAuth, getOrCreateUser } from "./clerkAuth";
 import { getAuth } from "@clerk/express";
+
+// Clerk Frontend API Proxy for custom domain support
+async function clerkProxyHandler(req: Request, res: Response) {
+  try {
+    const clerkSecretKey = process.env.CLERK_SECRET_KEY_ECO;
+    if (!clerkSecretKey) {
+      return res.status(500).json({ error: "Clerk secret key not configured" });
+    }
+
+    // Build the target URL - strip /__clerk prefix
+    const targetPath = req.path.replace(/^\/__clerk/, "") || "/";
+    const targetUrl = new URL(targetPath, "https://frontend-api.clerk.dev");
+    
+    // Forward query params
+    Object.entries(req.query).forEach(([key, value]) => {
+      if (typeof value === "string") {
+        targetUrl.searchParams.set(key, value);
+      }
+    });
+
+    // Build headers for the proxy request
+    const proxyHeaders: Record<string, string> = {
+      "Clerk-Proxy-Url": `${req.protocol}://${req.get("host")}/__clerk`,
+      "Clerk-Secret-Key": clerkSecretKey,
+      "X-Forwarded-For": req.ip || req.headers["x-forwarded-for"]?.toString() || "",
+    };
+
+    // Forward relevant headers from original request
+    const forwardHeaders = ["content-type", "accept", "authorization", "cookie", "user-agent"];
+    forwardHeaders.forEach((header) => {
+      const value = req.headers[header];
+      if (value && typeof value === "string") {
+        proxyHeaders[header] = value;
+      }
+    });
+
+    // Make the proxy request
+    const response = await fetch(targetUrl.toString(), {
+      method: req.method,
+      headers: proxyHeaders,
+      body: ["POST", "PUT", "PATCH"].includes(req.method) ? JSON.stringify(req.body) : undefined,
+      redirect: "manual",
+    });
+
+    // Forward response status
+    res.status(response.status);
+
+    // Forward response headers
+    response.headers.forEach((value, key) => {
+      // Skip certain headers that shouldn't be forwarded
+      if (!["transfer-encoding", "content-encoding", "connection"].includes(key.toLowerCase())) {
+        res.setHeader(key, value);
+      }
+    });
+
+    // Forward response body
+    const responseText = await response.text();
+    res.send(responseText);
+  } catch (error) {
+    console.error("Clerk proxy error:", error);
+    res.status(500).json({ error: "Proxy request failed" });
+  }
+}
 
 // Using the javascript_xai blueprint - Grok AI
 const xai = new OpenAI({
@@ -79,6 +142,10 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
+  // Clerk Frontend API Proxy - must be before other middleware
+  app.all("/__clerk/*", clerkProxyHandler);
+  app.all("/__clerk", clerkProxyHandler);
+
   // Setup Clerk Auth
   setupClerkAuth(app);
 
