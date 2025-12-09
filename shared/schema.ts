@@ -52,6 +52,9 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   debatesThisMonth: integer("debates_this_month").default(0).notNull(),
   lastDebateMonth: varchar("last_debate_month"),
+  purchasedAnalyses: integer("purchased_analyses").default(0).notNull(), // Pay-per-use credits
+  lifetimePurchases: integer("lifetime_purchases").default(0).notNull(), // Track for upsell
+  lastPurchaseAt: timestamp("last_purchase_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
