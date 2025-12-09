@@ -137,13 +137,41 @@ export default function Analyze() {
       const response = await apiRequest("POST", "/api/debate", data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setResult(data.result);
       setAnalyzedSymbols(data.symbols);
       setActiveSymbol(data.symbols[0]);
       setDebateId(data.id);
-      queryClient.invalidateQueries({ queryKey: ["/api/user/debates"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Store previous credit balance before invalidating queries
+      const previousCreditBalance = user?.purchasedAnalyses || 0;
+
+      // Invalidate queries to refresh user data
+      await queryClient.invalidateQueries({ queryKey: ["/api/user/debates"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+
+      // Wait a moment for the query to refetch, then check if credit was used
+      setTimeout(() => {
+        const currentUser = queryClient.getQueryData<User>(["/api/auth/user"]);
+        const newCreditBalance = currentUser?.purchasedAnalyses || 0;
+
+        if (previousCreditBalance > 0 && newCreditBalance < previousCreditBalance) {
+          // Credit was consumed
+          const creditsUsed = previousCreditBalance - newCreditBalance;
+          toast({
+            title: "Credit Used",
+            description: `${creditsUsed} credit${creditsUsed !== 1 ? 's' : ''} used. ${newCreditBalance} credit${newCreditBalance !== 1 ? 's' : ''} remaining.`,
+            variant: "default",
+          });
+        } else if (data.cached) {
+          // Show cache hit feedback
+          toast({
+            title: "Instant Result",
+            description: "Analysis retrieved from cache (no credit used).",
+            variant: "default",
+          });
+        }
+      }, 500);
     },
     onError: (error: Error) => {
       if (error.message.includes("limit")) {

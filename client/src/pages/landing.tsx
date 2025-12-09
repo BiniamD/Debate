@@ -77,15 +77,14 @@ export default function Landing() {
           </Badge>
           
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight tracking-tight" data-testid="text-hero-title">
-            Break the echo.
-            <br />
+            AI-Powered Stock Analysis with{" "}
             <span className="bg-gradient-to-r from-[#0052FF] to-[#00D395] bg-clip-text text-transparent">
-              See every angle.
+              Bull, Bear, and Neutral Perspectives
             </span>
           </h1>
-          
+
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed" data-testid="text-hero-subtitle">
-            Get bull, bear, and neutral perspectives on any stock in seconds. Make informed investment decisions by understanding all sides of the story.
+            Get all three perspectives on any stock in seconds. Make informed investment decisions by understanding every side of the story—not just the hype.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
