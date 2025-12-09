@@ -259,6 +259,89 @@ export async function registerRoutes(
     }
   });
 
+  // Purchase single analysis (pay-per-use)
+  app.post("/api/purchase/analysis", optionalAuth, async (req: any, res) => {
+    try {
+      const stripe = await getUncachableStripeClient();
+      const auth = getAuth(req);
+
+      // Get or create user
+      let userId: string | null = null;
+      if (auth.userId) {
+        userId = auth.userId;
+      }
+
+      const protocol = req.headers['x-forwarded-proto'] || 'http';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Stock Analysis Credit',
+              description: 'One AI-powered stock analysis (never expires)',
+            },
+            unit_amount: 199, // $1.99
+          },
+          quantity: 1,
+        }],
+        mode: 'payment', // One-time payment (not subscription)
+        metadata: {
+          userId: userId || 'anonymous',
+          quantity: '1',
+          type: 'analysis_credit',
+        },
+        success_url: `${protocol}://${host}/purchase/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${protocol}://${host}/analyze`,
+      });
+
+      res.json({ url: session.url });
+    } catch (error) {
+      console.error("Purchase error:", error);
+      res.status(500).json({ error: "Failed to create purchase session" });
+    }
+  });
+
+  // Purchase verification for pay-per-use
+  app.get("/api/purchase/verify", isAuthenticated, async (req: any, res) => {
+    try {
+      const { session_id } = req.query;
+      if (!session_id || typeof session_id !== 'string') {
+        return res.status(400).json({ error: "Missing session_id" });
+      }
+
+      const stripe = await getUncachableStripeClient();
+      const session = await stripe.checkout.sessions.retrieve(session_id);
+
+      if (session.payment_status === 'paid' && session.metadata?.type === 'analysis_credit') {
+        const auth = getAuth(req);
+        const user = await storage.getUserByReplitSub(auth.userId!);
+
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+
+        const quantity = parseInt(session.metadata.quantity || '1');
+        await storage.addPurchasedAnalyses(user.id, quantity);
+
+        console.log(`Added ${quantity} analysis credit(s) for user ${user.id}`);
+
+        res.json({
+          success: true,
+          credits: quantity,
+          total: user.purchasedAnalyses + quantity,
+        });
+      } else {
+        res.json({ success: false, status: session.payment_status });
+      }
+    } catch (error) {
+      console.error("Purchase verification error:", error);
+      res.status(500).json({ error: "Failed to verify purchase" });
+    }
+  });
+
   // Checkout success - verify subscription and mark user as Pro
   app.get("/api/checkout/verify", isAuthenticated, async (req: any, res) => {
     try {
@@ -367,31 +450,61 @@ export async function registerRoutes(
           
           // Check rate limit for non-Pro users (each symbol counts as one debate)
           if (!user.isPremium) {
-            const debatesThisMonth = user.lastDebateMonth === currentMonth 
-              ? user.debatesThisMonth 
+            const debatesThisMonth = user.lastDebateMonth === currentMonth
+              ? user.debatesThisMonth
               : 0;
-            
+
             if (debatesThisMonth + symbolCount > FREE_TIER_LIMIT) {
-              return res.status(429).json({
-                error: "Rate limit exceeded",
-                message: `You've reached your free tier limit. You have ${Math.max(0, FREE_TIER_LIMIT - debatesThisMonth)} analyses remaining this month. Upgrade to Pro for unlimited analyses.`,
-                code: "RATE_LIMIT_EXCEEDED",
-              });
+              // Free tier exhausted - check for purchased credits
+              if (user.purchasedAnalyses > 0) {
+                // Use purchased credit
+                const creditUsed = await storage.usePurchasedAnalysis(user.id);
+                if (!creditUsed) {
+                  return res.status(500).json({
+                    error: "Failed to use credit",
+                    message: "An error occurred processing your credit. Please try again.",
+                  });
+                }
+                console.log(`User ${user.id} used 1 purchased credit (${user.purchasedAnalyses - 1} remaining)`);
+              } else {
+                // No credits - show paywall with both options
+                return res.status(429).json({
+                  error: "Rate limit exceeded",
+                  message: `You've used all ${FREE_TIER_LIMIT} free analyses this month.`,
+                  remaining: Math.max(0, FREE_TIER_LIMIT - debatesThisMonth),
+                  code: "RATE_LIMIT_EXCEEDED",
+                  options: {
+                    payPerUse: {
+                      price: 1.99,
+                      endpoint: "/api/purchase/analysis",
+                      label: "Buy 1 Analysis",
+                    },
+                    subscription: {
+                      price: 9.00,
+                      endpoint: "/api/checkout",
+                      label: "Go Pro - Unlimited",
+                    }
+                  }
+                });
+              }
             }
           }
           
           // Update user's monthly debate count (charge per symbol)
-          if (user.lastDebateMonth !== currentMonth) {
-            // New month, reset count
-            await storage.updateUser(user.id, { 
-              debatesThisMonth: symbolCount, 
-              lastDebateMonth: currentMonth 
-            });
-          } else {
-            // Same month, increment count by number of symbols
-            await storage.updateUser(user.id, { 
-              debatesThisMonth: user.debatesThisMonth + symbolCount 
-            });
+          // Only increment if not using purchased credits and not Pro
+          if (!user.isPremium && user.purchasedAnalyses === 0) {
+            if (user.lastDebateMonth !== currentMonth) {
+              // New month, reset count
+              await storage.updateUser(user.id, {
+                debatesThisMonth: symbolCount,
+                lastDebateMonth: currentMonth
+              });
+            } else {
+              // Same month, increment count by number of symbols
+              await storage.updateUser(user.id, {
+                debatesThisMonth: user.debatesThisMonth + symbolCount
+              });
+            }
           }
         }
       }
