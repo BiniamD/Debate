@@ -212,7 +212,17 @@ export default function Analyze() {
 
   const debatesUsed = user?.debatesThisMonth || 0;
   const remaining = Math.max(0, 3 - debatesUsed);
-  const remainingDebates = user?.isPremium ? "Unlimited" : `${remaining} remaining`;
+  const creditBalance = user?.purchasedAnalyses || 0;
+
+  const getRemainingText = () => {
+    if (user?.isPremium) return "Unlimited";
+    if (creditBalance > 0) {
+      return `${creditBalance} credit${creditBalance !== 1 ? 's' : ''} + ${remaining} free`;
+    }
+    return `${remaining} free`;
+  };
+
+  const remainingDebates = getRemainingText();
 
   return (
     <AppLayout>
@@ -227,6 +237,51 @@ export default function Analyze() {
               Enter a stock symbol to get AI-powered perspectives from all sides
             </p>
           </div>
+
+          {/* Credit Balance Info (for non-Pro users) */}
+          {user && !user.isPremium && creditBalance > 0 && (
+            <div className="mb-4 p-4 bg-[#00D395]/10 border border-[#00D395]/30 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-[#00D395]/20 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-[#00D395]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      You have {creditBalance} purchased credit{creditBalance !== 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Plus {remaining} free analysis{remaining !== 1 ? 'es' : ''} this month • Credits never expire
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-[#00D395] text-[#00D395] hover:bg-[#00D395]/10"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/purchase/analysis", {
+                        method: "POST",
+                        credentials: "include"
+                      });
+                      const data = await response.json();
+                      if (data.url) window.location.href = data.url;
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to start checkout",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  data-testid="button-buy-more-credits"
+                >
+                  Buy More
+                </Button>
+              </div>
+            </div>
+          )}
 
           {/* Analysis Input Card */}
           <Card className="p-6 sm:p-8 mb-8 shadow-lg border-border/50">
@@ -418,63 +473,138 @@ export default function Analyze() {
 
       {/* Paywall Dialog */}
       <Dialog open={showPaywall} onOpenChange={setShowPaywall}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle className="text-xl">Monthly Limit Reached</DialogTitle>
+            <DialogTitle className="text-xl">Choose How to Continue</DialogTitle>
             <DialogDescription className="text-base">
-              You've used all 3 free analyses this month. Upgrade to Pro for unlimited access.
+              You've used all 3 free analyses this month. Select an option below:
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="p-4 rounded-xl bg-muted/50 border border-border">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-semibold">Pro Plan</span>
-                <span className="text-2xl font-bold">$9<span className="text-sm font-normal text-muted-foreground">/month</span></span>
+          <div className="grid md:grid-cols-2 gap-4 pt-4">
+            {/* Pay-Per-Use Option */}
+            <div className="p-5 rounded-xl bg-[#00D395]/5 border-2 border-[#00D395] relative">
+              <Badge className="absolute -top-3 left-4 bg-[#00D395] text-white hover:bg-[#00D395]">
+                Try Once
+              </Badge>
+              <div className="mb-4 mt-2">
+                <div className="text-3xl font-bold text-foreground mb-1">
+                  $1.99
+                </div>
+                <p className="text-sm text-muted-foreground">One-time purchase</p>
               </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
+              <ul className="space-y-2.5 text-sm text-foreground mb-6">
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00D395]" />
-                  Unlimited analyses
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>1 stock analysis</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00D395]" />
-                  Priority AI responses
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>Never expires</span>
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-[#00D395]" />
-                  Export & share features
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>Use anytime</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>No commitment</span>
                 </li>
               </ul>
-            </div>
-            <Button
-              type="button"
-              className="w-full h-12 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold"
-              onClick={async () => {
-                try {
-                  const response = await fetch("/api/checkout", { method: "POST" });
-                  const data = await response.json();
-                  if (data.url) {
-                    window.location.href = data.url;
-                  } else if (data.error) {
+              <Button
+                type="button"
+                className="w-full h-11 bg-[#00D395] hover:bg-[#00D395]/90 text-white font-semibold"
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/purchase/analysis", {
+                      method: "POST",
+                      credentials: "include"
+                    });
+                    const data = await response.json();
+                    if (data.url) {
+                      window.location.href = data.url;
+                    } else if (data.error) {
+                      toast({
+                        title: "Error",
+                        description: data.error,
+                        variant: "destructive",
+                      });
+                    }
+                  } catch (error) {
                     toast({
                       title: "Error",
-                      description: data.error,
+                      description: "Failed to start checkout",
                       variant: "destructive",
                     });
                   }
-                } catch (error) {
-                  toast({
-                    title: "Error",
-                    description: "Failed to start checkout",
-                    variant: "destructive",
-                  });
-                }
-              }}
-              data-testid="button-upgrade-modal"
-            >
-              Upgrade to Pro
-            </Button>
+                }}
+                data-testid="button-buy-credit"
+              >
+                Buy 1 Analysis
+              </Button>
+            </div>
+
+            {/* Pro Subscription */}
+            <div className="p-5 rounded-xl bg-muted/50 border border-border relative">
+              <Badge className="absolute -top-3 left-4 bg-[#0052FF] text-white hover:bg-[#0052FF]">
+                Best Value
+              </Badge>
+              <div className="mb-4 mt-2">
+                <div className="text-3xl font-bold text-foreground mb-1">
+                  $9<span className="text-lg font-normal text-muted-foreground">/month</span>
+                </div>
+                <p className="text-sm text-muted-foreground">Subscription</p>
+              </div>
+              <ul className="space-y-2.5 text-sm text-foreground mb-6">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span className="font-medium">Unlimited analyses</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>Priority AI responses</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>Full analysis history</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#00D395] flex-shrink-0" />
+                  <span>Export & share features</span>
+                </li>
+              </ul>
+              <Button
+                type="button"
+                className="w-full h-11 bg-[#0052FF] hover:bg-[#0052FF]/90 text-white font-semibold"
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/checkout", { method: "POST" });
+                    const data = await response.json();
+                    if (data.url) {
+                      window.location.href = data.url;
+                    } else if (data.error) {
+                      toast({
+                        title: "Error",
+                        description: data.error,
+                        variant: "destructive",
+                      });
+                    }
+                  } catch (error) {
+                    toast({
+                      title: "Error",
+                      description: "Failed to start checkout",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                data-testid="button-upgrade-modal"
+              >
+                Upgrade to Pro
+              </Button>
+            </div>
           </div>
+          <p className="text-xs text-center text-muted-foreground pt-2">
+            Both options include bull, bear, and neutral perspectives
+          </p>
         </DialogContent>
       </Dialog>
     </AppLayout>

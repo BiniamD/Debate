@@ -191,17 +191,17 @@ export default function Landing() {
 
       {/* Pricing Section */}
       <section className="py-20">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4" data-testid="text-pricing-title">
               Simple, Transparent Pricing
             </h2>
             <p className="text-lg text-muted-foreground">
-              Start free. Upgrade when you need unlimited access.
+              Start free, pay as you go, or upgrade for unlimited access.
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 gap-6">
+
+          <div className="grid md:grid-cols-3 gap-6">
             {/* Free Tier */}
             <Card className="p-8 bg-card shadow-md border-border/50">
               <div className="mb-6">
@@ -240,7 +240,50 @@ export default function Landing() {
                 </SignInButton>
               )}
             </Card>
-            
+
+            {/* Pay-Per-Use Tier */}
+            <Card className="p-8 bg-card shadow-md border-border/50">
+              <div className="mb-6">
+                <h3 className="text-xl font-semibold text-foreground mb-1">Pay Per Use</h3>
+                <p className="text-muted-foreground text-sm">Try when you need</p>
+              </div>
+              <p className="text-4xl font-bold text-foreground mb-6">
+                $1.99
+                <span className="text-base font-normal text-muted-foreground">/analysis</span>
+              </p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3 text-foreground">
+                  <Check className="w-5 h-5 text-[#00D395] flex-shrink-0" />
+                  <span>Buy as you need</span>
+                </li>
+                <li className="flex items-center gap-3 text-foreground">
+                  <Check className="w-5 h-5 text-[#00D395] flex-shrink-0" />
+                  <span>Never expires</span>
+                </li>
+                <li className="flex items-center gap-3 text-foreground">
+                  <Check className="w-5 h-5 text-[#00D395] flex-shrink-0" />
+                  <span>No commitment</span>
+                </li>
+                <li className="flex items-center gap-3 text-foreground">
+                  <Check className="w-5 h-5 text-[#00D395] flex-shrink-0" />
+                  <span>All features included</span>
+                </li>
+              </ul>
+              {isAuthenticated ? (
+                <Link href="/analyze">
+                  <Button variant="outline" className="w-full h-12 font-medium border-[#00D395] text-[#00D395] hover:bg-[#00D395]/10" data-testid="button-pay-per-use">
+                    Start Analyzing
+                  </Button>
+                </Link>
+              ) : (
+                <SignInButton mode="modal" forceRedirectUrl="/analyze">
+                  <Button variant="outline" className="w-full h-12 font-medium border-[#00D395] text-[#00D395] hover:bg-[#00D395]/10" data-testid="button-pay-per-use">
+                    Start Analyzing
+                  </Button>
+                </SignInButton>
+              )}
+            </Card>
+
             {/* Pro Tier */}
             <Card className="p-8 bg-card shadow-lg border-2 border-[#0052FF] relative">
               <Badge className="absolute -top-3 right-6 bg-[#0052FF] text-white hover:bg-[#0052FF]">
