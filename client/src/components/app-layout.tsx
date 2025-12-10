@@ -2,7 +2,8 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { SignInButton, SignOutButton, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, LogIn, History, Sparkles, Crown } from "lucide-react";
+import { MessageSquare, LogIn, History, Sparkles, Crown, Zap } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [location] = useLocation();
+  const { toast } = useToast();
 
   const isActive = (path: string) => location.split('?')[0] === path;
 
@@ -62,33 +64,69 @@ export function AppLayout({ children }: AppLayoutProps) {
             {isLoading ? (
               <div className="w-9 h-9 rounded-full bg-muted animate-pulse" />
             ) : isAuthenticated && user ? (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 {user.isPremium && (
                   <span className="text-xs bg-gradient-to-r from-[#0052FF] to-[#00D395] text-white px-2 py-0.5 rounded-full font-semibold">
                     PRO
                   </span>
                 )}
                 {!user.isPremium && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-9 gap-2 text-[#0052FF] hover:text-[#0052FF]/80"
-                    onClick={async () => {
-                      try {
-                        const response = await fetch("/api/checkout", { method: "POST" });
-                        const data = await response.json();
-                        if (data.url) {
-                          window.location.href = data.url;
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 gap-1.5 border-[#00D395] text-[#00D395] hover:bg-[#00D395]/10 font-medium"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch("/api/purchase/analysis", {
+                            method: "POST",
+                            credentials: "include"
+                          });
+                          const data = await response.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          } else if (data.error) {
+                            toast({
+                              title: "Error",
+                              description: data.error,
+                              variant: "destructive",
+                            });
+                          }
+                        } catch (error) {
+                          toast({
+                            title: "Error",
+                            description: "Failed to start checkout",
+                            variant: "destructive",
+                          });
                         }
-                      } catch (error) {
-                        console.error("Checkout error:", error);
-                      }
-                    }}
-                    data-testid="button-upgrade"
-                  >
-                    <Crown className="w-4 h-4" />
-                    <span className="hidden sm:inline">Upgrade</span>
-                  </Button>
+                      }}
+                      data-testid="button-buy-credit-header"
+                    >
+                      <Zap className="w-4 h-4" />
+                      <span className="hidden md:inline">Buy Credit</span>
+                      <span className="md:hidden">$1.99</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-9 gap-2 text-[#0052FF] hover:text-[#0052FF]/80"
+                      onClick={async () => {
+                        try {
+                          const response = await fetch("/api/checkout", { method: "POST" });
+                          const data = await response.json();
+                          if (data.url) {
+                            window.location.href = data.url;
+                          }
+                        } catch (error) {
+                          console.error("Checkout error:", error);
+                        }
+                      }}
+                      data-testid="button-upgrade"
+                    >
+                      <Crown className="w-4 h-4" />
+                      <span className="hidden sm:inline">Upgrade</span>
+                    </Button>
+                  </>
                 )}
                 <UserButton 
                   afterSignOutUrl="/"

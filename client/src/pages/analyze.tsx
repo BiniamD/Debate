@@ -11,17 +11,18 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { AppLayout } from "@/components/app-layout";
 import type { User, DebateResponse, MultiDebateResponse } from "@shared/schema";
-import { 
-  Sparkles, 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart3, 
-  Share2, 
-  Copy, 
+import {
+  Sparkles,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  Share2,
+  Copy,
   Check,
   Loader2,
   ChevronRight,
-  Info
+  Info,
+  Crown
 } from "lucide-react";
 import { SiX } from "react-icons/si";
 import {
@@ -266,8 +267,49 @@ export default function Analyze() {
             </p>
           </div>
 
+          {/* Upsell Banner for Multi-Buyers */}
+          {user && !user.isPremium && (user.lifetimePurchases || 0) >= 4 && (
+            <div className="mb-4 p-4 bg-gradient-to-r from-[#0052FF]/10 to-[#00D395]/10 border border-[#0052FF]/30 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#0052FF] to-[#00D395] flex items-center justify-center">
+                    <Crown className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      💡 You've purchased {user.lifetimePurchases} credits (${((user.lifetimePurchases || 0) * 1.99).toFixed(2)})
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Upgrade to Pro for $9/month and get unlimited analyses—better value!
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  size="sm"
+                  className="bg-[#0052FF] hover:bg-[#0052FF]/90 text-white"
+                  onClick={async () => {
+                    try {
+                      const response = await fetch("/api/checkout", { method: "POST" });
+                      const data = await response.json();
+                      if (data.url) window.location.href = data.url;
+                    } catch (error) {
+                      toast({
+                        title: "Error",
+                        description: "Failed to start checkout",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                  data-testid="button-upgrade-upsell"
+                >
+                  Upgrade to Pro
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Credit Balance Info (for non-Pro users) */}
-          {user && !user.isPremium && creditBalance > 0 && (
+          {user && !user.isPremium && creditBalance > 0 && (user.lifetimePurchases || 0) < 4 && (
             <div className="mb-4 p-4 bg-[#00D395]/10 border border-[#00D395]/30 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -479,6 +521,68 @@ export default function Analyze() {
                 /* Single symbol - no tabs needed */
                 currentResult && <PerspectiveCards data={currentResult} symbol={analyzedSymbols[0]} />
               )}
+
+              {/* Post-Analysis Engagement CTAs */}
+              <Card className="mt-8 p-6 bg-gradient-to-br from-muted/30 to-muted/10 border-border/50">
+                <div className="text-center">
+                  <h3 className="text-lg font-semibold text-foreground mb-2">
+                    What's next?
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Make your next move with confidence
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setResult(null);
+                        setSymbolInput("");
+                        setContext("");
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="gap-2"
+                      data-testid="button-analyze-another"
+                    >
+                      <Sparkles className="w-4 h-4" />
+                      Analyze Another Stock
+                    </Button>
+                    {debateId && (
+                      <Button
+                        variant="outline"
+                        onClick={handleShareTwitter}
+                        className="gap-2"
+                        data-testid="button-share-analysis"
+                      >
+                        <Share2 className="w-4 h-4" />
+                        Share This Analysis
+                      </Button>
+                    )}
+                    {!user?.isPremium && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-[#0052FF] hover:text-[#0052FF]/80"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/checkout", { method: "POST" });
+                            const data = await response.json();
+                            if (data.url) window.location.href = data.url;
+                          } catch (error) {
+                            toast({
+                              title: "Error",
+                              description: "Failed to start checkout",
+                              variant: "destructive",
+                            });
+                          }
+                        }}
+                      >
+                        <Crown className="w-4 h-4 mr-1" />
+                        Get Unlimited Analyses
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
             </>
           )}
 
